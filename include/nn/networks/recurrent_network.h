@@ -29,6 +29,7 @@ class RecurrentNetwork : public NeuralNetwork {
 
   ~RecurrentNetwork();
 
+  void replace_feature(int feature_no);
 
   void print_graph(Neuron *root);
 
