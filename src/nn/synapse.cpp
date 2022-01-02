@@ -171,6 +171,13 @@ void Synapse::update_weight() {
   } else {
 //    std::cout << "Updating weight\n";
     this->weight -= (this->step_size * this->credit);
+    if(this->input_neuron->id == this->output_neuron->id){
+      if(this->weight >= 0.999){
+        this->weight = 0.99;
+      }
+      if(this->weight < 0)
+        this->weight = 0;
+    }
   }
 }
 
