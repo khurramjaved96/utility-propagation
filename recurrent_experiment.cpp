@@ -13,17 +13,17 @@ int main(){
   TracePatterning tc = TracePatterning(std::pair<int, int>(4, 4),
                                            std::pair<int, int>(4, 4),
                                            std::pair<int, int>(20, 20), 0, 0);
-  auto network = RecurrentNetwork(1e-4, 0, 7, 1, 100, 6);
+  auto network = RecurrentNetwork(1e-4, 0, 7, 1, 200, 6);
   network.forward(tc.reset());
   std::vector<float> target_vector;
   target_vector.push_back(tc.get_target(0.75));
   network.backward(target_vector, true);
   print_vector(network.read_all_values());
   float running_error = 0;
-  for(int i = 0; i < 1000000; i++) {
+  for(int i = 0; i < 5000000; i++) {
     auto inp = tc.step();
     if(i % 10000 == 0){
-      print_vector(network.read_all_weights());
+//      print_vector(network.read_all_weights());
       std::cout << "Running error = " << running_error << std::endl;
     }
 
@@ -37,14 +37,14 @@ int main(){
     running_error = running_error*0.999 + 0.001*((target_vector[0] - network.read_output_values()[0])*(target_vector[0] - network.read_output_values()[0]));
     network.backward(target_vector, true);
 
-    if(i % 20000 < 100){
-      std::cout << "Input : ";
-      print_vector(inp);
-      std::cout << "Prediction : ";
-      print_vector(network.read_output_values());
-      std::cout << "Target : " << tc.get_target(0.75) << std::endl;
-
-    }
+//    if(i % 20000 < 100){
+//      std::cout << "Input : ";
+//      print_vector(inp);
+//      std::cout << "Prediction : ";
+//      print_vector(network.read_output_values());
+//      std::cout << "Target : " << tc.get_target(0.75) << std::endl;
+//
+//    }
 //    print_vector(network.read_all_values());
 //    print_vector(network.read_output_values());
 //    std::cout << "Target = " << tc.get_target(0.75) << std::endl;
