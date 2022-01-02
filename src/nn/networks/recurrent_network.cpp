@@ -64,7 +64,7 @@ RecurrentNetwork::RecurrentNetwork(float step_size,
 
   for(auto output_neuron: this->output_neurons) {
     for (int i = 0; i < this->recurrent_features.size(); i++) {
-      Synapse* output_synapse = new Synapse(this->recurrent_features[i], output_neuron, 1, step_size_val);
+      Synapse* output_synapse = new Synapse(this->recurrent_features[i], output_neuron, 0, step_size_val);
       this->output_synapses.push_back(output_synapse);
       this->all_synapses.push_back(output_synapse);
     }
