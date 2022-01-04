@@ -68,6 +68,24 @@ void RecurrentRelu::fire(int time_step) {
 //  std::cout << "Old val " << this->old_value << " New val " << this->value << std::endl;
 }
 
+void RecurrentRelu::compute_gradient_of_all_synapses() {
+//  First we get error from the output node
+  this->outgoing_synapses[0]->gradient = this->value;
+//  std::cout << "Output gradient value " << this->outgoing_synapses[0]->gradient << std::endl;
+
+//  Then we update the trace value for RTRL computation of all the parameters
+  for (auto synapse: this->incoming_synapses) {
+    if (synapse->input_neuron->id == synapse->output_neuron->id) {
+        synapse->TH = this->backward(this->value)*(this->old_value + this->recurrent_synapse->weight * synapse->TH);
+    } else {
+        synapse->TH = this->backward(this->value)*(synapse->input_neuron->value + this->recurrent_synapse->weight * synapse->TH);
+      }
+    synapse->gradient = synapse->TH*this->outgoing_synapses[0]->weight;
+    }
+//    Finally, we use the updated TH value to compute the gradient
+
+}
+
 void Neuron::update_value(int time_step) {
 //  std::cout << "Updating value of non-recurrent neuron : " << this->id << "\n";
   this->value_before_firing = 0;
@@ -133,32 +151,6 @@ bool to_delete_ss(Synapse *s) {
  */
 
 
-void Neuron::forward_gradients() {
-//  If this neuron has gradients to pass back
-  for (auto &it : this->incoming_synapses) {
-    float message_value;
-
-    message_value = this->error_gradient.gradient;
-
-//          We pack our gradient into a new message and pass it back to our incoming synapse.
-    message grad_temp(message_value, this->error_gradient.time_step);
-    grad_temp.lambda = this->error_gradient.lambda;
-    grad_temp.gamma = this->error_gradient.gamma;
-    grad_temp.error = this->error_gradient.error;
-    grad_temp.target = this->error_gradient.target;
-
-    if (it->propagate_gradients)
-      it->grad_queue = grad_temp;
-    it->grad_queue_weight_assignment = grad_temp;
-  }  //  Remove this gradient from our list of things needed to pass back
-}
-
-/**
- * NOTE: If you are not VERY familiar with the backprop algorithm, I highly recommend
- * doing some reading before going through this function.
- */
-
-
 void LTUSynced::set_threshold(float threshold) {
   this->activation_threshold = threshold;
 }
@@ -170,45 +162,7 @@ int Neuron::get_no_of_syanpses_with_gradients() {
   }
   return synapse_with_gradient;
 }
-void Neuron::propagate_error() {
-  float accumulate_gradient = 0;
-  int time_vector;
-  int distance_vector;
-  float error_vector;
-  message messages_q;
 
-//  No gradient propagation required for prediction nodes
-
-// We need a loop invariant for this function to make sure progress is always made. Things to make sure:
-// 1. A queue for a certain outgoing path won't grow large indefinitely
-// 2. Adding new connections or removing old connections won't cause deadlocks
-// 3. We can never get in a situation in which neither activation nor the gradient is popped. Some number should strictly increase or decrease
-
-// No need to pass gradients if there are no out-going nodes with gradients
-  if (this->get_no_of_syanpses_with_gradients() > 0 && !is_input_neuron) {
-
-    for (auto &output_synapses_iterator : this->outgoing_synapses) {
-      accumulate_gradient += output_synapses_iterator->weight *
-          output_synapses_iterator->grad_queue.gradient;
-
-      error_vector = output_synapses_iterator->grad_queue.error;
-      messages_q = output_synapses_iterator->grad_queue;
-      time_vector = output_synapses_iterator->grad_queue.time_step;
-      output_synapses_iterator->grad_queue.remove = true;
-
-    }
-
-//    std::cout <<
-    message n_message(accumulate_gradient, time_vector);
-    n_message.error = error_vector;
-    n_message.gamma = messages_q.gamma;
-    n_message.lambda = messages_q.lambda;
-    n_message.target = messages_q.target;
-
-
-    this->error_gradient = n_message;
-  }
-}
 
 /**
  * Mark synapses and neurons for deletion. Synapses will only get deleted if its age is > 70k.
@@ -319,35 +273,6 @@ float Neuron::introduce_targets(float target, int time_step) {
   return error * error;
 }
 
-/**
- * Introduce a target to a neuron and calculate its error.
- * In this case, target should be our TD target, and the neuron should be an outgoing neuron.
- * @param target: target gradient_activation to calculate our error.
- * @param time_step: time step that we calculate this error. Use for backprop purposes.
- * @param gamma: discount factor
- * @param lambda: eligibility trace decay parameter
- * @return: squared error
- */
-//float Neuron::introduce_targets(float target, int time_step, float gamma, float lambda) {
-////  Introduce a target to a neuron and calculate its error.
-////  In this case, target should be our TD target.
-//
-////      The activation is the output of our NN.
-//  float error;
-//
-//  error = this->value - target;
-//  float error_grad = error;
-//
-//
-////      Create our error gradient for this neuron
-//  message m(1, time_step);
-//  m.lambda = lambda;
-//  m.gamma = gamma;
-//  m.error = error_grad;
-//
-//  this->error_gradient = m;
-//  return error;
-//}
 
 float LinearNeuron::forward(float temp_value) {
   return temp_value;

@@ -48,6 +48,8 @@ class Neuron : public dynamic_elem {
   std::vector<Synapse *> outgoing_synapses;
   std::vector<Synapse *> incoming_synapses;
 
+
+
   int get_no_of_syanpses_with_gradients();
 
   Neuron(bool is_input, bool is_output);
@@ -85,6 +87,8 @@ class RecurrentRelu : public Neuron {
   void disable_learning();
 
   void enable_learning();
+
+  void compute_gradient_of_all_synapses();
 
   void update_value(int time_step);
 

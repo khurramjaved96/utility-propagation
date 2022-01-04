@@ -29,6 +29,7 @@ Synapse::Synapse(Neuron *input, Neuron *output, float w, float step_size) {
   input->increment_reference();
   output_neuron = output;
   output->increment_reference();
+  this->gradient = 0;
   credit = 0;
   is_useless = false;
   age = 0;
@@ -108,24 +109,17 @@ void Synapse::update_utility() {
 /**
  * Calculate and set credit based on gradients in the current synapse.
  */
-void Synapse::assign_credit() {
+void Synapse::assign_credit(float prediction_error, float lambda, float gamma) {
 
-  if(this->output_neuron->is_recurrent_neuron) {
-    this->trace = this->trace * this->grad_queue_weight_assignment.gamma *
-        this->grad_queue_weight_assignment.lambda +
-        this->TH * this->grad_queue_weight_assignment.gradient;
-  }
-  else {
-    this->trace = this->trace * this->grad_queue_weight_assignment.gamma *
-        this->grad_queue_weight_assignment.lambda +
-        this->input_neuron->value *
-            this->grad_queue_weight_assignment.gradient;
-  }
-  this->tidbd_old_activation = this->weight_assignment_past_activations.gradient_activation;
-  this->tidbd_old_error = this->grad_queue_weight_assignment.error;
-//  std::cout << "Trace = " << this->trace << " Error " << this->grad_queue_weight_assignment.error << std::endl;
-  this->credit = this->trace * this->grad_queue_weight_assignment.error;
+  this->trace = this->trace * gamma * lambda +
+        this->gradient;
 
+
+//  this->tidbd_old_activation = this->weight_assignment_past_activations.gradient_activation;
+//  this->tidbd_old_error = this->grad_queue_weight_assignment.error;
+
+  this->credit = this->trace * prediction_error;
+//  std::cout << "Credit = " << this->credit << std::endl;
 }
 
 void Synapse::block_gradients() {

@@ -32,7 +32,7 @@ class Synapse : public dynamic_elem {
 
 //  Parameter only used for recurrent neurons
   float TH;
-
+  float gradient;
   float utility_to_keep;
   float synapse_utility;
   float synapse_utility_to_distribute;
@@ -51,9 +51,6 @@ class Synapse : public dynamic_elem {
 
   bool get_recurrent_status();
 
-  message grad_queue;
-  message grad_queue_weight_assignment;
-  message_activation weight_assignment_past_activations;
   Neuron *input_neuron;
   Neuron *output_neuron;
 
@@ -74,7 +71,7 @@ class Synapse : public dynamic_elem {
 
   void memory_leak_patch();
 
-  void assign_credit();
+  void assign_credit(float prediction_error, float lambda,  float gamma);
 
   void reset_trace();
 
