@@ -32,16 +32,15 @@ PYBIND11_MODULE(FlexibleNN, m) {
         .def("print_neuron_status", &NeuralNetwork::print_neuron_status)
         .def("get_total_synapses", &NeuralNetwork::get_total_synapses)
         .def("get_total_neurons", &NeuralNetwork::get_total_neurons)
-        .def("reset_trace", &NeuralNetwork::reset_trace)
-        .def("viz_graph", &NeuralNetwork::viz_graph);
+        .def("reset_trace", &NeuralNetwork::reset_trace);
 
 
     py::class_<RecurrentNetwork, NeuralNetwork>(m, "RecurrentNetwork")
         .def(py::init<float, int, int, int, int, int>())
         .def_readonly("active_synapses", &RecurrentNetwork::active_synapses)
         .def_readonly("Recurrent_neuron_layer", &RecurrentNetwork::Recurrent_neuron_layer)
-        .def("replace_feature", &RecurrentNetwork::replace_feature)
-        .def("print_graph", &RecurrentNetwork::print_graph)
+        .def("replace_least_important_feature", &RecurrentNetwork::replace_least_important_feature)
+        .def("update_parameters", &RecurrentNetwork::update_parameters)
         .def("forward", &RecurrentNetwork::forward)
         .def("backward", &RecurrentNetwork::backward);
 

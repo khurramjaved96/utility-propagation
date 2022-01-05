@@ -27,7 +27,8 @@ RecurrentNetwork::RecurrentNetwork(float step_size,
     this->all_neurons.push_back(n);
   }
 
-  float step_size_val = 3e-2;
+  //float step_size_val = 3e-2;
+  float step_size_val = step_size;
   for (int output_neurons = 0; output_neurons < total_targets; output_neurons++) {
 //    Neuron *output_neuron = new SigmoidNeuron(false, true);
     Neuron *output_neuron = new LinearNeuron(false, true);
