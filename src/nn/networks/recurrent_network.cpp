@@ -90,7 +90,7 @@ void RecurrentNetwork::forward(std::vector<float> inp) {
       this->input_neurons.begin(),
       this->input_neurons.end(),
       [&](Neuron *n) {
-        n->fire(this->time_step);
+        n->fire();
       });
 
   int counter = 0;
@@ -102,7 +102,7 @@ void RecurrentNetwork::forward(std::vector<float> inp) {
         RecurrentNeuronList.begin(),
         RecurrentNeuronList.end(),
         [&](Neuron *n) {
-          n->update_value(this->time_step);
+          n->update_value();
         });
 
 //    std::cout << "Firing " << counter << "\n";
@@ -111,7 +111,7 @@ void RecurrentNetwork::forward(std::vector<float> inp) {
         RecurrentNeuronList.begin(),
         RecurrentNeuronList.end(),
         [&](Neuron *n) {
-          n->fire(this->time_step);
+          n->fire();
         });
 
   }
@@ -123,7 +123,7 @@ void RecurrentNetwork::forward(std::vector<float> inp) {
       this->output_neurons.begin(),
       this->output_neurons.end(),
       [&](Neuron *n) {
-        n->update_value(this->time_step);
+        n->update_value();
       });
 
 //  std::cout << "Firing output \n";
@@ -132,19 +132,9 @@ void RecurrentNetwork::forward(std::vector<float> inp) {
       this->output_neurons.begin(),
       this->output_neurons.end(),
       [&](Neuron *n) {
-        n->fire(this->time_step);
+        n->fire();
       });
 
-//  std::cout << "Updating neuron utility \n";
-//  std::for_each(
-//      std::execution::par_unseq,
-//      this->all_neurons.begin(),
-//      this->all_neurons.end(),
-//      [&](Neuron *n) {
-//        n->update_utility();
-//      });
-
-  this->time_step++;
 }
 
 int RecurrentNetwork::least_useful_feature() {
@@ -154,9 +144,7 @@ int RecurrentNetwork::least_useful_feature() {
   int counter = 0;
   int total_eligible_for_replacement = 0;
   for (RecurrentRelu *neuron: this->Recurrent_neuron_layer[0]) {
-//    std::cout << "ID\tAge\tWeight\tLSW\n";
-//    std::cout << neuron->id << "\t" << neuron->neuron_age << "\t" << std::abs(neuron->outgoing_synapses[0]->weight)
-//              << "\t" << least_useful_weight << std::endl;
+
     if(neuron->neuron_age > 20000){
       total_eligible_for_replacement++;
     }

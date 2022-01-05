@@ -34,7 +34,6 @@ class Neuron : public dynamic_elem {
   bool useless_neuron;
   int64_t id;
   int neuron_age;
-  float mark_useless_prob;
 
   void set_layer_number(int layer);
 
@@ -42,37 +41,23 @@ class Neuron : public dynamic_elem {
 
   void forward_gradients();
 
-  virtual void update_value(int time_step);
+  virtual void update_value();
 
   message error_gradient;
   std::vector<Synapse *> outgoing_synapses;
   std::vector<Synapse *> incoming_synapses;
 
-
-
-  int get_no_of_syanpses_with_gradients();
-
   Neuron(bool is_input, bool is_output);
 
-  virtual void fire(int time_step);
+  virtual void fire();
 
-  float introduce_targets(float target, int timestep);
-
-//  float introduce_targets(float target, int timestep, float gamma, float lambda);
-
-  void propagate_error();
+  float introduce_targets(float target);
 
   virtual float backward(float output_grad) = 0;
 
   virtual float forward(float temp_value) = 0;
 
   void update_utility();
-
-  void normalize_neuron();
-
-  void mark_useless_weights();
-
-  void prune_useless_weights();
 
   ~Neuron() = default;
 };
@@ -90,9 +75,7 @@ class RecurrentRelu : public Neuron {
 
   void compute_gradient_of_all_synapses();
 
-  void update_value(int time_step);
-
-  void update_TH();
+  void update_value();
 
   float backward(float output_grad);
 
@@ -102,41 +85,10 @@ class RecurrentRelu : public Neuron {
 
   RecurrentRelu(bool is_input, bool is_output);
 
-  void fire(int time_step);
+  void fire();
 
 
 };
-
-class LTUSynced : public Neuron {
- public:
-  float backward(float output_grad);
-  float forward(float temp_value);
-  LTUSynced(bool is_input, bool is_output, float threshold);
-  void set_threshold(float threshold);
-  float activation_threshold;
-
-};
-
-class SigmoidNeuron : public Neuron {
- public:
-  float backward(float output_grad);
-
-  float forward(float temp_value);
-
-  SigmoidNeuron(bool is_input, bool is_output);
-};
-
-
-class ReluNeuron : public Neuron {
- public:
-  float backward(float output_grad);
-
-  float forward(float temp_value);
-
-  ReluNeuron(bool is_input, bool is_output);
-
-};
-
 
 class BiasNeuron : public Neuron {
  public:
