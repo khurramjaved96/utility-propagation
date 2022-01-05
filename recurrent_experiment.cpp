@@ -21,44 +21,44 @@ int main(int argc, char *argv[]) {
                                                            my_experiment.get_int_param("ISI_high")),
                                        std::pair<int, int>(my_experiment.get_int_param("ITI_low"),
                                                            my_experiment.get_int_param("ITI_high")),
-                                       0,
+                                       my_experiment.get_int_param("distractors"),
                                        my_experiment.get_int_param("seed"));
 
   auto network = RecurrentNetwork(my_experiment.get_float_param("step_size"),
                                   my_experiment.get_int_param("seed"),
-                                  7,
+                                  7 + my_experiment.get_int_param("distractors"),
                                   1,
                                   my_experiment.get_int_param("features"),
                                   my_experiment.get_int_param("connections"));
   network.forward(tc.reset());
   std::vector<float> target_vector;
   target_vector.push_back(tc.get_target(GAMMA));
-  network.backward(target_vector, true);
+  network.backward(target_vector);
+  network.update_parameters();
   print_vector(network.read_all_values());
   float running_error = 0;
   for (int i = 0; i < my_experiment.get_int_param("steps"); i++) {
     auto inp = tc.step();
+    if(i%my_experiment.get_int_param("replacement_rate") == 0){
+      network.replace_least_important_feature();
+    }
     if (i % 10000 == 0) {
 //      print_vector(network.read_all_weights());
       std::cout << "Step = " << i << std::endl;
       std::cout << "Running error = " << running_error << std::endl;
     }
-
-//    std::vector<float> inp(10, 1);
-//    std::cout << "Step = " << i << std::endl;
-
-//    std::cout << "Input vector ";
 //    print_vector(inp);
     network.forward(inp);
     target_vector[0] = tc.get_target(GAMMA);
-    running_error = running_error * 0.999 + 0.001
+    running_error = running_error * 0.99995 + 0.00005
         * ((target_vector[0] - network.read_output_values()[0]) * (target_vector[0] - network.read_output_values()[0]));
-    network.backward(target_vector, true);
+    network.backward(target_vector);
+    network.update_parameters();
 
-    if(i % 20000 < 100){
+    if(i % 80000 < 100){
 //      std::cout << "Input : ";
 //      print_vector(inp);
-      std::cout << "Prediction\t" << network.read_output_values()[0] << "\tTarget\t" << tc.get_target(GAMMA)  << std::endl;
+//      std::cout << "Prediction\t" << network.read_output_values()[0] << "\tTarget\t" << tc.get_target(GAMMA)  << std::endl;
 
     }
 //    print_vector(network.read_all_values());

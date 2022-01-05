@@ -93,7 +93,7 @@ std::vector<float> TracePatterning::reset() {
 
 void TracePatterning::set_noise_bits() {
   for (int temp = this->pattern_len + 1; temp < this->pattern_len + 1 + this->num_distractors; temp++) {
-    if (NoiseSampler(mt) > 0.98 || temp == this->pattern_len + 1) {
+    if (NoiseSampler(mt) > 0.98) {
       this->current_state[temp] = 1;
     } else {
       this->current_state[temp] = 0;
