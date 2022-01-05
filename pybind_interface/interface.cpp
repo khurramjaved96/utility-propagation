@@ -33,8 +33,7 @@ PYBIND11_MODULE(FlexibleNN, m) {
         .def("get_total_synapses", &NeuralNetwork::get_total_synapses)
         .def("get_total_neurons", &NeuralNetwork::get_total_neurons)
         .def("reset_trace", &NeuralNetwork::reset_trace)
-        .def("viz_graph", &NeuralNetwork::viz_graph)
-        .def("get_viz_graph", &NeuralNetwork::get_viz_graph);
+        .def("viz_graph", &NeuralNetwork::viz_graph);
 
 
     py::class_<RecurrentNetwork, NeuralNetwork>(m, "RecurrentNetwork")
@@ -43,16 +42,8 @@ PYBIND11_MODULE(FlexibleNN, m) {
         .def_readonly("Recurrent_neuron_layer", &RecurrentNetwork::Recurrent_neuron_layer)
         .def("replace_feature", &RecurrentNetwork::replace_feature)
         .def("print_graph", &RecurrentNetwork::print_graph)
-        .def("viz_graph", &RecurrentNetwork::viz_graph)
-        .def("set_print_bool", &RecurrentNetwork::set_print_bool)
-        .def("get_viz_graph", &RecurrentNetwork::get_viz_graph)
-        .def("imprint", &RecurrentNetwork::imprint)
         .def("forward", &RecurrentNetwork::forward)
-        .def("backward", &RecurrentNetwork::backward)
-        .def("add_feature", &RecurrentNetwork::add_feature)
-        .def("add_feature_binary", &RecurrentNetwork::add_feature_binary)
-        .def("imprint_feature", &RecurrentNetwork::imprint_feature)
-        .def("imprint_feature_random", &RecurrentNetwork::imprint_feature_random);
+        .def("backward", &RecurrentNetwork::backward);
 
     py::class_<Metric>(m, "Metric")
         .def(py::init<std::string, std::string, std::vector<std::string>, std::vector<std::string>, std::vector<std::string>>())
