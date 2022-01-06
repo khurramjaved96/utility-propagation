@@ -116,6 +116,14 @@ class LinearNeuron : public Neuron {
 };
 
 
+class SigmoidNeuron : public Neuron {
+ public:
+  float backward(float output_grad);
+
+  float forward(float temp_value);
+
+  SigmoidNeuron(bool is_input, bool is_output);
+};
 
 
 

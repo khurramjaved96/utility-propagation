@@ -184,6 +184,20 @@ BiasNeuron::BiasNeuron() : Neuron(false, false) {
 
 LinearNeuron::LinearNeuron(bool is_input, bool is_output) : Neuron(is_input, is_output) {}
 
+SigmoidNeuron::SigmoidNeuron(bool is_input, bool is_output) : Neuron(is_input, is_output) {}
+
+float SigmoidNeuron::forward(float temp_value) {
+
+  return sigmoid(temp_value);
+}
+
+float SigmoidNeuron::backward(float post_activation) {
+  return post_activation * (1 - post_activation);
+}
+
+
 std::mt19937 Neuron::gen = std::mt19937(0);
 
 int64_t Neuron::neuron_id_generator = 0;
+
+
