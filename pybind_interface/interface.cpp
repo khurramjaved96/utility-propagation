@@ -52,7 +52,9 @@ PYBIND11_MODULE(FlexibleNN, m) {
         .def("replace_least_important_feature", &RecurrentClassifierNetwork::replace_least_important_feature)
         .def("update_parameters", &RecurrentClassifierNetwork::update_parameters)
         .def("forward", &RecurrentClassifierNetwork::forward)
-        .def("backward", &RecurrentClassifierNetwork::backward);
+        .def("backward", &RecurrentClassifierNetwork::backward)
+        .def("reset_state", &RecurrentClassifierNetwork::reset_state);
+
 
     py::class_<Metric>(m, "Metric")
         .def(py::init<std::string, std::string, std::vector<std::string>, std::vector<std::string>, std::vector<std::string>>())

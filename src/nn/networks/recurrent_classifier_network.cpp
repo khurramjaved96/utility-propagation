@@ -254,4 +254,20 @@ void RecurrentClassifierNetwork::update_parameters() {
 }
 
 
+void RecurrentClassifierNetwork::reset_state() {
+  std::for_each(
+      std::execution::par_unseq,
+      this->Recurrent_neuron_layer[0].begin(),
+      this->Recurrent_neuron_layer[0].end(),
+      [&](RecurrentRelu *n) {
+        n->old_value= 0;
+      });
+  std::for_each(
+      std::execution::par_unseq,
+      all_synapses.begin(),
+      all_synapses.end(),
+      [&](Synapse *s) {
+        s->TH = 0;
+      });
+}
 
