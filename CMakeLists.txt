@@ -22,6 +22,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 #include_directories($ENV{SLURM_TMPDIR}/CAN/lib/python3.7/site-packages/pybind11/include/pybind11)
 
+
 add_executable(RecurrentNetwork include/experiment/Experiment.h src/experiment/Experiment.cpp include/experiment/Database.h
         src/experiment/Database.cpp include/experiment/Metric.h src/experiment/Metric.cpp recurrent_experiment.cpp include/nn/synapse.h
         include/nn/synapse.h include/nn/message.h include/nn/dynamic_elem.h include/nn/utils.h include/nn/networks/neural_network.h
@@ -35,6 +36,24 @@ add_executable(RecurrentNetwork include/experiment/Experiment.h src/experiment/E
 
 target_link_libraries(RecurrentNetwork PUBLIC tbb)
 target_link_libraries(RecurrentNetwork PUBLIC mariadb)
+
+# pybind specific config begin (comment this out if not working)
+add_subdirectory(pybind11)
+include_directories(pybind11/include/pybind11)
+
+pybind11_add_module(FlexibleNN include/experiment/Experiment.h src/experiment/Experiment.cpp include/experiment/Database.h
+        src/experiment/Database.cpp include/experiment/Metric.h src/experiment/Metric.cpp recurrent_experiment.cpp include/nn/synapse.h
+        include/nn/synapse.h include/nn/message.h include/nn/dynamic_elem.h include/nn/utils.h include/nn/networks/neural_network.h
+        include/nn/networks/recurrent_network.h src/nn/synapse.cpp
+        src/nn/neuron.cpp src/nn/utils.cpp src/nn/dynamic_elem.cpp src/nn/networks/recurrent_network.cpp
+        src/nn/networks/neural_network.cpp src/nn/utils.cpp src/utils.cpp include/utils.h src/nn/message.cpp
+        include/environments/animal_learning/tracecondioning.h src/environments/animal_learning/traceconditioning.cpp
+        include/nn/networks/recurrent_classifier_network.h src/nn/networks/recurrent_classifier_network.cpp
+        src/environments/animal_learning/tracepatterning.cpp pybind_interface/interface.cpp)
+
+target_link_libraries(FlexibleNN PUBLIC tbb)
+target_link_libraries(FlexibleNN PUBLIC mariadb)
+# pybind specific config  end
 
 project(FlexibleNN LANGUAGES CXX)
 
