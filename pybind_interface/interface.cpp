@@ -3,6 +3,7 @@
 #include <vector>
 #include "../include/nn/networks/neural_network.h"
 #include "../include/nn/networks/recurrent_network.h"
+#include "../include/nn/networks/recurrent_classifier_network.h"
 #include "../include/nn/synapse.h"
 #include "../include/experiment/Metric.h"
 
@@ -43,6 +44,15 @@ PYBIND11_MODULE(FlexibleNN, m) {
         .def("update_parameters", &RecurrentNetwork::update_parameters)
         .def("forward", &RecurrentNetwork::forward)
         .def("backward", &RecurrentNetwork::backward);
+
+    py::class_<RecurrentClassifierNetwork, NeuralNetwork>(m, "RecurrentClassifierNetwork")
+        .def(py::init<float, int, int, int, int, int>())
+        .def_readonly("active_synapses", &RecurrentClassifierNetwork::active_synapses)
+        .def_readonly("Recurrent_neuron_layer", &RecurrentClassifierNetwork::Recurrent_neuron_layer)
+        .def("replace_least_important_feature", &RecurrentClassifierNetwork::replace_least_important_feature)
+        .def("update_parameters", &RecurrentClassifierNetwork::update_parameters)
+        .def("forward", &RecurrentClassifierNetwork::forward)
+        .def("backward", &RecurrentClassifierNetwork::backward);
 
     py::class_<Metric>(m, "Metric")
         .def(py::init<std::string, std::string, std::vector<std::string>, std::vector<std::string>, std::vector<std::string>>())

@@ -25,6 +25,8 @@ Neuron::Neuron(bool is_input, bool is_output) {
   drinking_age = 5000;
   is_bias_unit = false;
   is_recurrent_neuron = false;
+  neuron_utility_trace_decay_rate = 0.9999;
+  drinking_age = 5.0 / (1.0 - neuron_utility_trace_decay_rate);
 }
 
 void Neuron::set_layer_number(int layer) {
@@ -36,23 +38,13 @@ int Neuron::get_layer_number() {
 }
 
 void Neuron::update_utility() {
-
-  this->neuron_utility = 0;
-  for (auto it: this->outgoing_synapses) {
-    this->neuron_utility += it->synapse_utility_to_distribute;
-  }
-  if (this->is_output_neuron)
-    this->neuron_utility = 1;
-
-  this->sum_of_utility_traces = 0;
-  for (auto it: this->incoming_synapses) {
-    if (!it->disable_utility)
-      this->sum_of_utility_traces += it->synapse_local_utility_trace;
-  }
+  this->neuron_utility = this->neuron_utility * this->neuron_utility_trace_decay_rate
+      + std::abs(this->value * this->outgoing_synapses[0]->weight) * (1 - neuron_utility_trace_decay_rate);
 }
 
-
-
+float Neuron::get_utility() {
+  return this->neuron_utility;
+}
 
 void Neuron::fire() {
   this->neuron_age++;
@@ -65,20 +57,36 @@ void RecurrentRelu::fire() {
   this->value = this->forward(value_before_firing);
 }
 
-void RecurrentRelu::compute_gradient_of_all_synapses() {
+bool Neuron::is_mature() {
+//  std::cout << "Neuron age \t Drinking age\n";
+//  std::cout << this->neuron_age << "\t" << this->drinking_age << std::endl;
+  if (this->neuron_age > this->drinking_age)
+    return true;
+  return false;
+}
+
+void RecurrentRelu::compute_gradient_of_all_synapses(std::vector<float> prediction_error_list) {
 //  First we get error from the output node
-  this->outgoing_synapses[0]->gradient = this->value;
-//  std::cout << "Output gradient value " << this->outgoing_synapses[0]->gradient << std::endl;
+  float incoming_gradient_sum = 0;
+  int counter = 0;
+  for (auto synapse: this->outgoing_synapses) {
+    synapse->gradient = this->value * prediction_error_list[counter];
+    incoming_gradient_sum +=
+        prediction_error_list[counter] * synapse->output_neuron->backward(synapse->output_neuron->value)
+            * synapse->weight;
+    counter++;
+  }
 
 //  Then we update the trace value for RTRL computation of all the parameters
   for (auto synapse: this->incoming_synapses) {
     if (synapse->input_neuron->id == synapse->output_neuron->id) {
-        synapse->TH = this->backward(this->value)*(this->old_value + this->recurrent_synapse->weight * synapse->TH);
+      synapse->TH = this->backward(this->value) * (this->old_value + this->recurrent_synapse->weight * synapse->TH);
     } else {
-        synapse->TH = this->backward(this->value)*(synapse->input_neuron->value + this->recurrent_synapse->weight * synapse->TH);
-      }
-    synapse->gradient = synapse->TH*this->outgoing_synapses[0]->weight;
+      synapse->TH =
+          this->backward(this->value) * (synapse->input_neuron->value + this->recurrent_synapse->weight * synapse->TH);
     }
+    synapse->gradient = synapse->TH * incoming_gradient_sum;
+  }
 //    Finally, we use the updated TH value to compute the gradient
 
 }
@@ -97,7 +105,7 @@ void Neuron::update_value() {
 void RecurrentRelu::disable_learning() {
   this->learning = false;
   for (auto synapse: this->incoming_synapses) {
-    synapse->TH=0;
+    synapse->TH = 0;
   }
 }
 
@@ -115,7 +123,6 @@ void RecurrentRelu::update_value() {
     this->value_before_firing += it->weight * it->input_neuron->value;
   }
 }
-
 
 /**
  * Introduce a target to a neuron and calculate its error.
@@ -137,7 +144,6 @@ float Neuron::introduce_targets(float target) {
   return error * error;
 }
 
-
 float LinearNeuron::forward(float temp_value) {
   return temp_value;
 }
@@ -145,7 +151,6 @@ float LinearNeuron::forward(float temp_value) {
 float LinearNeuron::backward(float post_activation) {
   return 1;
 }
-
 
 float BiasNeuron::forward(float temp_value) {
   return 1;
@@ -162,12 +167,11 @@ float RecurrentRelu::forward(float temp_value) {
 }
 
 float RecurrentRelu::backward(float post_activation) {
-  if(post_activation > 0){
+  if (post_activation > 0) {
     return 1;
   }
   return 0;
 }
-
 
 RecurrentRelu::RecurrentRelu(bool is_input, bool is_output) : Neuron(is_input, is_output) {
   this->old_value = 0;
@@ -180,6 +184,20 @@ BiasNeuron::BiasNeuron() : Neuron(false, false) {
 
 LinearNeuron::LinearNeuron(bool is_input, bool is_output) : Neuron(is_input, is_output) {}
 
+SigmoidNeuron::SigmoidNeuron(bool is_input, bool is_output) : Neuron(is_input, is_output) {}
+
+float SigmoidNeuron::forward(float temp_value) {
+
+  return sigmoid(temp_value);
+}
+
+float SigmoidNeuron::backward(float post_activation) {
+  return post_activation * (1 - post_activation);
+}
+
+
 std::mt19937 Neuron::gen = std::mt19937(0);
 
 int64_t Neuron::neuron_id_generator = 0;
+
+

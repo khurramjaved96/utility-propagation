@@ -27,23 +27,23 @@ def main():
     set_random_seed(seed)
 
     mnist = MNIST(seed=seed)
-    model = FlexibleNN.RecurrentNetwork(
+    model = FlexibleNN.RecurrentClassifierNetwork(
         step_size,
         seed,
         28,
         10,
-        256,
-        28
+        1024,
+        10
     )
 
     step = 0
     running_error = 0
     running_acc = 0
-    for epochs in range(100):
+    for epochs in range(500):
         for _, inp, label in mnist.sequential_iterator(split='train'):
             step += 1
-            #if step %1000 == 0:
-            #    model.replace_least_important_feature()
+            if step %40000 == 0:
+                model.replace_least_important_feature()
             model.forward(inp)
             if label is not None:
                 targets = np.zeros(10)

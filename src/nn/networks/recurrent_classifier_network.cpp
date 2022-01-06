@@ -5,14 +5,14 @@
 #include <execution>
 #include <algorithm>
 #include <iostream>
-#include "../../../include/nn/networks/recurrent_network.h"
+#include "../../../include/nn/networks/recurrent_classifier_network.h"
 
-RecurrentNetwork::RecurrentNetwork(float step_size,
-                                   int seed,
-                                   int no_of_input_features,
-                                   int total_targets,
-                                   int total_recurrent_features,
-                                   int connections_per_feature) {
+RecurrentClassifierNetwork::RecurrentClassifierNetwork(float step_size,
+                                                       int seed,
+                                                       int no_of_input_features,
+                                                       int total_targets,
+                                                       int total_recurrent_features,
+                                                       int connections_per_feature) {
 
   this->mt.seed(seed);
   std::uniform_int_distribution<int> neuron_number_sampler(0, no_of_input_features - 1);
@@ -29,8 +29,8 @@ RecurrentNetwork::RecurrentNetwork(float step_size,
 
   float step_size_val = step_size;
   for (int output_neurons = 0; output_neurons < total_targets; output_neurons++) {
-//    Neuron *output_neuron = new SigmoidNeuron(false, true);
-    Neuron *output_neuron = new LinearNeuron(false, true);
+    Neuron *output_neuron = new SigmoidNeuron(false, true);
+    //Neuron *output_neuron = new LinearNeuron(false, true);
     output_neuron->set_layer_number(100);
     this->all_neurons.push_back(output_neuron);
     this->output_neurons.push_back(output_neuron);
@@ -77,11 +77,11 @@ RecurrentNetwork::RecurrentNetwork(float step_size,
   }
 }
 
-RecurrentNetwork::~RecurrentNetwork() {
+RecurrentClassifierNetwork::~RecurrentClassifierNetwork() {
 
 }
 
-void RecurrentNetwork::forward(std::vector<float> inp) {
+void RecurrentClassifierNetwork::forward(std::vector<float> inp) {
 
   this->set_input_values(inp);
 
@@ -145,7 +145,7 @@ void RecurrentNetwork::forward(std::vector<float> inp) {
 
 }
 
-int RecurrentNetwork::least_useful_feature() {
+int RecurrentClassifierNetwork::least_useful_feature() {
 //  std::cout << "Getting lease useful feature index\n";
   float least_utility = 5000000;
   int least_useful_index = -1;
@@ -173,7 +173,7 @@ int RecurrentNetwork::least_useful_feature() {
   return least_useful_index;
 }
 
-void RecurrentNetwork::replace_least_important_feature() {
+void RecurrentClassifierNetwork::replace_least_important_feature() {
   int index = least_useful_feature();
   std::cout << "Replacing feature = " << index << std::endl;
   if (index == -1)
@@ -181,7 +181,7 @@ void RecurrentNetwork::replace_least_important_feature() {
   replace_feature(index);
 }
 
-void RecurrentNetwork::replace_feature(int feature_no) {
+void RecurrentClassifierNetwork::replace_feature(int feature_no) {
 //  std::cout << "Replacing feature no " << feature_no << "\n";
   std::uniform_int_distribution<int> neuron_number_sampler(0, this->input_neurons.size() - 1);
   std::uniform_real_distribution<float> weight_sampler(-1, 1);
@@ -215,7 +215,7 @@ void RecurrentNetwork::replace_feature(int feature_no) {
 //  std::cout << "Feature replaced\n";
 }
 
-void RecurrentNetwork::backward(std::vector<float> target) {
+void RecurrentClassifierNetwork::backward(std::vector<float> target) {
   float prediction_error = this->output_neurons[0]->value - target[0];
   std::vector<float> error_list;
   int counter = 0;
@@ -242,7 +242,7 @@ void RecurrentNetwork::backward(std::vector<float> target) {
 
 }
 
-void RecurrentNetwork::update_parameters() {
+void RecurrentClassifierNetwork::update_parameters() {
 
   std::for_each(
       std::execution::par_unseq,

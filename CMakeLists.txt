@@ -48,6 +48,7 @@ pybind11_add_module(FlexibleNN include/experiment/Experiment.h src/experiment/Ex
         src/nn/neuron.cpp src/nn/utils.cpp src/nn/dynamic_elem.cpp src/nn/networks/recurrent_network.cpp
         src/nn/networks/neural_network.cpp src/nn/utils.cpp src/utils.cpp include/utils.h src/nn/message.cpp
         include/environments/animal_learning/tracecondioning.h src/environments/animal_learning/traceconditioning.cpp
+        include/nn/networks/recurrent_classifier_network.h src/nn/networks/recurrent_classifier_network.cpp
         src/environments/animal_learning/tracepatterning.cpp pybind_interface/interface.cpp)
 
 target_link_libraries(FlexibleNN PUBLIC tbb)
