@@ -216,7 +216,6 @@ void RecurrentNetwork::replace_feature(int feature_no) {
 }
 
 void RecurrentNetwork::backward(std::vector<float> target) {
-  float prediction_error = this->output_neurons[0]->value - target[0];
   std::vector<float> error_list;
   int counter = 0;
   for(auto neuron: this->output_neurons){

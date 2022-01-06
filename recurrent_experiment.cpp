@@ -27,12 +27,13 @@ int main(int argc, char *argv[]) {
   auto network = RecurrentNetwork(my_experiment.get_float_param("step_size"),
                                   my_experiment.get_int_param("seed"),
                                   7 + my_experiment.get_int_param("distractors"),
-                                  1,
+                                  2,
                                   my_experiment.get_int_param("features"),
                                   my_experiment.get_int_param("connections"));
   network.forward(tc.reset());
   std::vector<float> target_vector;
   target_vector.push_back(tc.get_target(GAMMA));
+  target_vector.push_back(tc.get_target(GAMMA*0.5));
   network.backward(target_vector);
   network.update_parameters();
   print_vector(network.read_all_values());
@@ -50,6 +51,7 @@ int main(int argc, char *argv[]) {
 //    print_vector(inp);
     network.forward(inp);
     target_vector[0] = tc.get_target(GAMMA);
+    target_vector[1] = tc.get_target(GAMMA*0.5);
     running_error = running_error * 0.99995 + 0.00005
         * ((target_vector[0] - network.read_output_values()[0]) * (target_vector[0] - network.read_output_values()[0]));
     network.backward(target_vector);
@@ -59,6 +61,7 @@ int main(int argc, char *argv[]) {
 //      std::cout << "Input : ";
 //      print_vector(inp);
       std::cout << "Prediction\t" << network.read_output_values()[0] << "\tTarget\t" << tc.get_target(GAMMA)  << std::endl;
+      std::cout << "Prediction second\t" << network.read_output_values()[1] << "\tTarget\t" << tc.get_target(GAMMA*0.5)  << std::endl;
 
     }
 //    print_vector(network.read_all_values());

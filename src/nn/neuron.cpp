@@ -38,8 +38,12 @@ int Neuron::get_layer_number() {
 }
 
 void Neuron::update_utility() {
-  this->neuron_utility = this->neuron_utility * this->neuron_utility_trace_decay_rate
-      + std::abs(this->value * this->outgoing_synapses[0]->weight) * (1 - neuron_utility_trace_decay_rate);
+
+  for(auto synapse: this->outgoing_synapses) {
+    this->neuron_utility = this->neuron_utility * this->neuron_utility_trace_decay_rate
+        + std::abs(this->value * synapse->weight) * (1 - neuron_utility_trace_decay_rate);
+  }
+
 }
 
 float Neuron::get_utility() {
