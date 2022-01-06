@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
     if(i % 80000 < 100){
 //      std::cout << "Input : ";
 //      print_vector(inp);
-//      std::cout << "Prediction\t" << network.read_output_values()[0] << "\tTarget\t" << tc.get_target(GAMMA)  << std::endl;
+      std::cout << "Prediction\t" << network.read_output_values()[0] << "\tTarget\t" << tc.get_target(GAMMA)  << std::endl;
 
     }
 //    print_vector(network.read_all_values());

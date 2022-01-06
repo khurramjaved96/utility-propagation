@@ -33,6 +33,7 @@ class Neuron : public dynamic_elem {
   bool is_output_neuron;
   bool useless_neuron;
   int64_t id;
+  float neuron_utility_trace_decay_rate;
   int neuron_age;
 
   void set_layer_number(int layer);
@@ -42,6 +43,8 @@ class Neuron : public dynamic_elem {
   void forward_gradients();
 
   virtual void update_value();
+
+
 
   message error_gradient;
   std::vector<Synapse *> outgoing_synapses;
@@ -59,6 +62,10 @@ class Neuron : public dynamic_elem {
 
   void update_utility();
 
+  float get_utility();
+
+  bool is_mature();
+
   ~Neuron() = default;
 };
 
@@ -73,7 +80,7 @@ class RecurrentRelu : public Neuron {
 
   void enable_learning();
 
-  void compute_gradient_of_all_synapses();
+  void compute_gradient_of_all_synapses(std::vector<float> prediction_error_list);
 
   void update_value();
 

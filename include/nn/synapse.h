@@ -71,7 +71,7 @@ class Synapse : public dynamic_elem {
 
   void memory_leak_patch();
 
-  void assign_credit(float prediction_error, float lambda,  float gamma);
+  void assign_credit();
 
   void reset_trace();
 

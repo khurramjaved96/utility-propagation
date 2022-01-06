@@ -109,17 +109,18 @@ void Synapse::update_utility() {
 /**
  * Calculate and set credit based on gradients in the current synapse.
  */
-void Synapse::assign_credit(float prediction_error, float lambda, float gamma) {
+void Synapse::assign_credit() {
 
-  this->trace = this->trace * gamma * lambda +
-        this->gradient;
-
-
-//  this->tidbd_old_activation = this->weight_assignment_past_activations.gradient_activation;
-//  this->tidbd_old_error = this->grad_queue_weight_assignment.error;
-
-  this->credit = this->trace * prediction_error;
-//  std::cout << "Credit = " << this->credit << std::endl;
+  this->credit = this->gradient;
+//  this->trace = this->trace * gamma * lambda +
+//        this->gradient;
+//
+//
+////  this->tidbd_old_activation = this->weight_assignment_past_activations.gradient_activation;
+////  this->tidbd_old_error = this->grad_queue_weight_assignment.error;
+//
+//  this->credit = this->trace * prediction_error;
+////  std::cout << "Credit = " << this->credit << std::endl;
 }
 
 void Synapse::block_gradients() {

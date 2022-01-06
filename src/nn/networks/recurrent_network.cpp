@@ -27,7 +27,7 @@ RecurrentNetwork::RecurrentNetwork(float step_size,
     this->all_neurons.push_back(n);
   }
 
-  float step_size_val = 3e-2;
+  float step_size_val = step_size;
   for (int output_neurons = 0; output_neurons < total_targets; output_neurons++) {
 //    Neuron *output_neuron = new SigmoidNeuron(false, true);
     Neuron *output_neuron = new LinearNeuron(false, true);
@@ -114,6 +114,14 @@ void RecurrentNetwork::forward(std::vector<float> inp) {
           n->fire();
         });
 
+    std::for_each(
+        std::execution::par_unseq,
+        RecurrentNeuronList.begin(),
+        RecurrentNeuronList.end(),
+        [&](Neuron *n) {
+          n->update_utility();
+        });
+
   }
 
 
@@ -139,24 +147,30 @@ void RecurrentNetwork::forward(std::vector<float> inp) {
 
 int RecurrentNetwork::least_useful_feature() {
 //  std::cout << "Getting lease useful feature index\n";
-  float least_useful_weight = 5000000;
+  float least_utility = 5000000;
   int least_useful_index = -1;
   int counter = 0;
   int total_eligible_for_replacement = 0;
   for (RecurrentRelu *neuron: this->Recurrent_neuron_layer[0]) {
-
-    if(neuron->neuron_age > 20000){
+//
+    if (neuron->is_mature()) {
+//      std::cout << "Found eligible neuron\n";
       total_eligible_for_replacement++;
     }
-    if (neuron->neuron_age > 20000 && std::abs(neuron->outgoing_synapses[0]->weight) < least_useful_weight) {
-      least_useful_weight = std::abs(neuron->outgoing_synapses[0]->weight);
+  }
+   for (RecurrentRelu *neuron: this->Recurrent_neuron_layer[0]) {
+    if(total_eligible_for_replacement*2 < this->Recurrent_neuron_layer[0].size()) {
+//      std::cout << "Not enough old features\t" << total_eligible_for_replacement << " Tootal neurons "<< this->Recurrent_neuron_layer[0].size() <<  std::endl;
+      return -1;
+    }
+
+    if (neuron->is_mature() && neuron->get_utility() < least_utility) {
+      least_utility = neuron->get_utility();
       least_useful_index = counter;
     }
     counter++;
   }
-  if(total_eligible_for_replacement*2 > this->Recurrent_neuron_layer[0].size())
-    return least_useful_index;
-  return -1;
+  return least_useful_index;
 }
 
 void RecurrentNetwork::replace_least_important_feature() {
@@ -177,6 +191,7 @@ void RecurrentNetwork::replace_feature(int feature_no) {
   std::vector<int> my_vec(this->input_neurons.size(), 0);
 //  std::cout << "Iterating over inputs\n";
 //  std::cout << "Incoming synapses size " << feature->incoming_synapses.size() << std::endl;
+  int total_incoming_synapses = feature->incoming_synapses.size();
   for (auto synapse: feature->incoming_synapses) {
 //    std::cout << "In the for loop\n";
     int feature_index = -1;
@@ -202,13 +217,19 @@ void RecurrentNetwork::replace_feature(int feature_no) {
 
 void RecurrentNetwork::backward(std::vector<float> target) {
   float prediction_error = this->output_neurons[0]->value - target[0];
+  std::vector<float> error_list;
+  int counter = 0;
+  for(auto neuron: this->output_neurons){
+    error_list.push_back(neuron->value - target[counter]);
+    counter++;
+  }
 
   std::for_each(
       std::execution::par_unseq,
       this->Recurrent_neuron_layer[0].begin(),
       this->Recurrent_neuron_layer[0].end(),
       [&](RecurrentRelu *n) {
-        n->compute_gradient_of_all_synapses();
+        n->compute_gradient_of_all_synapses(error_list);
       });
 
   std::for_each(
@@ -216,7 +237,7 @@ void RecurrentNetwork::backward(std::vector<float> target) {
       all_synapses.begin(),
       all_synapses.end(),
       [&](Synapse *s) {
-        s->assign_credit(prediction_error, 0, 0);
+        s->assign_credit();
       });
 
 }
