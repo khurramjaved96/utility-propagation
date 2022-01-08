@@ -56,5 +56,5 @@ class LoggingManager:
         if split == 'test' and self.test_metrics is not None:
             self.test_log_vec.append(self.items_to_str([self.run_id, epoch, timestep, error, acc]))
 
-        if split == 'test' or timestep % 20000 == 0:
+        if split == 'test' or timestep % self.commit_frequency== 0:
             self.commit_logs()

@@ -44,6 +44,7 @@ def main():
     parser.add_argument( "-r", "--run-id", help="run id (default: datetime)", default=datetime.now().strftime("%d%H%M%S%f")[:-5], type=int,)
     parser.add_argument("-s", "--seed", help="seed", default=0, type=int)
     parser.add_argument( "--db", help="database name", default="", type=str,)
+    parser.add_argument( "--db-prefix", help="database name prefix", default="hshah1_", type=str,)
     parser.add_argument( "-c", "--comment", help="comment for the experiment (can be used to filter within one db)", default="", type=str,)
     parser.add_argument( "--n-timesteps", help="number of timesteps", default=320000, type=int)
     parser.add_argument( "--hidden-size", help="size of the hidden recurrent layer", default=256, type=int)
@@ -57,7 +58,7 @@ def main():
     if args.db == "":
         print("db name not provided. Not logging results")
     else:
-        args.db = "hshah1_" + args.db
+        args.db = args.db_prefix + args.db
         Database().create_database(args.db)
         run_metric = Metric(args.db, "runs", list(vars(args).keys()), get_types(list(vars(args).values())), ["run_id"])
         run_metric.add_value([str(v) for v in list(vars(args).values())])
@@ -89,7 +90,7 @@ def main():
         log_to_db=(args.db != ""),
         run_id=args.run_id,
         model=None,
-        commit_frequency=5000,
+        commit_frequency=20000,
         training_metrics=training_metrics,
         test_metrics=test_metrics,
     )
