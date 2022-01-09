@@ -17,7 +17,7 @@ RecurrentNetwork::RecurrentNetwork(float step_size,
   this->mt.seed(seed);
   std::uniform_int_distribution<int> neuron_number_sampler(0, no_of_input_features - 1);
   std::uniform_real_distribution<float> weight_sampler(-1, 1);
-  std::uniform_real_distribution<float> recurrent_weight_sampler(0, 0.95);
+  std::uniform_real_distribution<float> recurrent_weight_sampler(0, 0.99);
   for (int i = 0; i < no_of_input_features; i++) {
     Neuron *n = new LinearNeuron(true, false);
     n->neuron_age = 0;
@@ -213,6 +213,23 @@ void RecurrentNetwork::replace_feature(int feature_no) {
   feature->outgoing_synapses[0]->age = 0;
   feature->neuron_age = 0;
 //  std::cout << "Feature replaced\n";
+}
+
+void RecurrentNetwork::reset_state() {
+  std::for_each(
+      std::execution::par_unseq,
+      this->Recurrent_neuron_layer[0].begin(),
+      this->Recurrent_neuron_layer[0].end(),
+      [&](RecurrentRelu *n) {
+        n->old_value= 0;
+      });
+  std::for_each(
+      std::execution::par_unseq,
+      all_synapses.begin(),
+      all_synapses.end(),
+      [&](Synapse *s) {
+        s->TH = 0;
+      });
 }
 
 void RecurrentNetwork::backward(std::vector<float> target) {

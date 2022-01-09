@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
 //    print_vector(inp);
     network.forward(inp);
     target_vector[0] = tc.get_target(GAMMA);
-    target_vector[1] = tc.get_target(GAMMA*0.5);
+    target_vector[1] = tc.get_target(GAMMA);
     running_error = running_error * 0.99995 + 0.00005
         * ((target_vector[0] - network.read_output_values()[0]) * (target_vector[0] - network.read_output_values()[0]));
     network.backward(target_vector);

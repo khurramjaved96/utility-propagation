@@ -49,6 +49,8 @@ class RecurrentNetwork : public NeuralNetwork {
 
   void add_feature(float step_size, float utility_to_keep);
 
+  void reset_state();
+
   int least_useful_feature();
 
   void replace_least_important_feature();
