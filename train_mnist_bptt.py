@@ -2,6 +2,7 @@ import sys
 import torch
 import argparse
 import random
+import copy
 import numpy as np
 from collections import deque
 from tqdm import tqdm
@@ -22,6 +23,7 @@ from src_py.utils.utils import get_types
 from src_py.utils.logging_manager import LoggingManager
 from src_py.envs.mnist import MNIST
 from src_py.models.rnn import RNN
+from src_py.models.lstm import LSTM
 
 
 def set_random_seed(seed: int) -> None:
@@ -32,6 +34,47 @@ def set_random_seed(seed: int) -> None:
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
+
+
+def evaluate(model, test_iterator, loss, logger, epoch, step, device, args):
+    print("")
+    model.eval()
+    hidden = model.reset_state()
+    test_errs = []
+    test_accs = []
+    test_step = 0
+    for _, inp, label in test_iterator:
+        test_step += 1
+        if test_step // 28 >= args.n_timesteps:
+            model.reset_state()
+            break
+
+        with torch.no_grad():
+            prediction, hidden = model(
+                torch.FloatTensor(inp).unsqueeze(dim=0).to(device), hidden
+            )
+
+        if label is not None:
+            targets = torch.FloatTensor(np.zeros(10)).to(device)
+            targets[label] = 1
+            test_errs.append(loss(prediction, targets.unsqueeze(dim=0)).detach())
+            test_accs.append(1 if torch.argmax(prediction) == label else 0)
+            test_iterator.set_description(
+                "Testing Epoch: %s, Step: %s, Err: %s, Acc: %s"
+                % (epoch, test_step // 28, np.mean(test_errs), np.mean(test_accs))
+            )
+            hidden = model.reset_state()
+    logger.log_performance_metrics(
+        "test",
+        epoch,
+        step // 28,
+        np.mean(test_errs),
+        0,
+        np.mean(test_accs),
+        0,
+    )
+    print("")
+    return np.mean(test_errs), np.mean(test_accs)
 
 
 def main():
@@ -46,8 +89,10 @@ def main():
     parser.add_argument( "--db", help="database name", default="", type=str,)
     parser.add_argument( "--db-prefix", help="database name prefix", default="hshah1_", type=str,)
     parser.add_argument( "-c", "--comment", help="comment for the experiment (can be used to filter within one db)", default="", type=str,)
-    parser.add_argument( "--n-timesteps", help="number of timesteps", default=320000, type=int)
-    parser.add_argument( "--hidden-size", help="size of the hidden recurrent layer", default=256, type=int)
+    parser.add_argument( "--n-timesteps", help="number of timesteps", default=640000, type=int)
+    parser.add_argument( "--hidden-size", help="size of the hidden recurrent layer", default=128, type=int)
+    parser.add_argument( "--n_layers", help="number of layers", default=1, type=int)
+    parser.add_argument( "--model", help="model to use: RNN or LSTM", default="LSTM", type=str,)
 
     parser.add_argument("--step-size", help="step size", default=1e-4, type=float)
 
@@ -104,13 +149,26 @@ def main():
     device = torch.device("cpu")  # its just faster ¯\_(ツ)_/¯
 
     mnist = MNIST(seed=args.seed)
-    model = RNN(input_size=28, hidden_size=args.hidden_size, output_size=10).to(device)
+    if args.model == "RNN":
+        model = RNN(
+            input_size=28, hidden_size=args.hidden_size, output_size=10, device=device
+        ).to(device)
+    elif args.model == "LSTM":
+        model = LSTM(
+            input_size=28,
+            hidden_size=args.hidden_size,
+            output_size=10,
+            n_layers=args.n_layers,
+            device=device,
+        ).to(device)
+
     opt = optim.RMSprop(model.parameters(), lr=args.step_size)
 
     step = 0
     running_error = None
     running_acc = None
-    hidden = model.reset_state().to(device)
+    test_error = 0
+    test_acc = 0
     # loss = nn.CrossEntropyLoss()
     # cross_entropy = loss(prediction, torch.tensor([label]))
     loss = nn.MSELoss()
@@ -120,6 +178,8 @@ def main():
 
     try:
         for epoch in range((args.n_timesteps // 60000) + 1):
+            model.train()
+            hidden = model.reset_state()
             iterator = tqdm(mnist.sequential_iterator(split="train"))
             for _, inp, label in iterator:
                 step += 1
@@ -152,7 +212,14 @@ def main():
                     )
                     iterator.set_description(
                         "Epoch: %s, Step: %s, Err: %s, Acc: %s, Run_Err: %s, Run_Acc: %s"
-                        % (epoch, step // 28, error.detach(), acc, running_error, running_acc)
+                        % (
+                            epoch,
+                            step // 28,
+                            error.detach(),
+                            acc,
+                            running_error,
+                            running_acc,
+                        )
                     )
                     logger.log_performance_metrics(
                         "training",
@@ -164,7 +231,20 @@ def main():
                         running_acc,
                     )
                     opt.zero_grad()
-                    hidden = model.reset_state().to(device)
+                    hidden = model.reset_state()
+
+                if step % 280000 == 0:
+                    test_iterator = tqdm(mnist.sequential_iterator(split="test"))
+                    test_error, test_acc = evaluate(
+                        copy.deepcopy(model),
+                        test_iterator,
+                        loss,
+                        logger,
+                        epoch,
+                        step,
+                        device,
+                        args,
+                    )
     except:
         state_comment = "killed"
         print("failed... quitting")
@@ -181,13 +261,14 @@ def main():
                         epoch,
                         running_error,
                         running_acc,
-                        0,
-                        0,
+                        test_error,
+                        test_acc,
                         str(timedelta(seconds=timer() - start)),
                     ]
                 ]
             )
         logger.commit_logs()
+
 
 if __name__ == "__main__":
     main()
