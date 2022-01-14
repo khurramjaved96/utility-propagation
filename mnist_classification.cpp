@@ -60,6 +60,7 @@ int main(int argc, char *argv[]) {
 
   for (int i = 0; i < my_experiment.get_int_param("steps"); i++) {
     int index = index_sampler(mt);
+//    std::cout << "INdex =  " << index << std::endl;
     auto x = images[index];
     float y_index = targets[index][0];
     std::vector<float> y(10);
@@ -71,7 +72,7 @@ int main(int argc, char *argv[]) {
         row_x.push_back(x[temp]/256.0);
       }
       network.forward(row_x);
-      if(row == 27) {
+      if(row != 27) {
         network.backward(network.read_output_values());
         network.update_parameters();
       }
@@ -84,7 +85,7 @@ int main(int argc, char *argv[]) {
 //    print_vector(network.read_output_values());
 //    print_vector(y);
     int prediction = argmax(network.read_output_values());
-    network.reset_trace();
+
 
 
     if(prediction == y_index){
@@ -100,6 +101,7 @@ int main(int argc, char *argv[]) {
 //      print_vector(y);
 //      std::cout << "Y index =" << y_index << std::endl;
     }
+    network.reset_state();
 //    std::cout << "Size of input image "<<x.size() << std::endl;
 //    return 0;
   }
