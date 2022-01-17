@@ -147,7 +147,7 @@ class LSTM : public Neuron{
   float Gb_i, Gb_f, Gb_g, Gb_o;
 
 
-
+  std::vector<Neuron *> incoming_neurons;
 
  public:
 
@@ -155,7 +155,7 @@ class LSTM : public Neuron{
 
   void print_gradients();
 
-  void add_synapse(Synapse* s, float w_i, float w_f, float w_g, float w_o);
+  void add_synapse(Neuron* s, float w_i, float w_f, float w_g, float w_o);
 
   float old_value;
 

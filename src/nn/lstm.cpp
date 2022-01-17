@@ -86,11 +86,11 @@ void LSTM::fire() {
 
 void LSTM::compute_gradient_of_all_synapses(std::vector<float> prediction_error_list) {
   std::vector<float> x;
-  for(auto &it: this->incoming_synapses){
-    x.push_back(it->input_neuron->value);
+  for(auto &it: this->incoming_neurons){
+    x.push_back(it->value);
   }
 
-  int n = this->incoming_synapses.size();
+  int n = this->incoming_neurons.size();
 
 //  Computing terms that are reused to save flops
 
@@ -263,12 +263,12 @@ void LSTM::update_value() {
 //    std::cout << it->input_neuron->value << std::endl;
 //  }
 //  exit(0);
-  for (auto &it: this->incoming_synapses) {
+  for (auto &it: this->incoming_neurons) {
 //    std::cout << w_i[counter] << "*" << it->input_neuron->value << std::endl;
-    i_val += this->w_i[counter] * it->input_neuron->value;
-    f += this->w_f[counter] * it->input_neuron->value;
-    g += this->w_g[counter] * it->input_neuron->value;
-    o += this->w_o[counter] * it->input_neuron->value;
+    i_val += this->w_i[counter] * it->value;
+    f += this->w_f[counter] * it->value;
+    g += this->w_g[counter] * it->value;
+    o += this->w_o[counter] * it->value;
     counter++;
   }
 
@@ -288,9 +288,9 @@ void LSTM::update_value() {
   this->value_before_firing = h;
 
 }
-
-void LSTM::add_synapse(Synapse *s, float w_i, float w_f, float w_g, float w_o) {
-  this->incoming_synapses.push_back(s);
+//
+void LSTM::add_synapse(Neuron *s, float w_i, float w_f, float w_g, float w_o) {
+  this->incoming_neurons.push_back(s);
   this->w_i.push_back(w_i);
   this->w_f.push_back(w_f);
   this->w_g.push_back(w_g);

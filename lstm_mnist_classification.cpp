@@ -21,7 +21,6 @@ int main(int argc, char *argv[]) {
 
 
   LSTM* lstm_neuron = new LSTM();
-  Neuron* lstm_downcast = dynamic_cast<Neuron*>(lstm_neuron);
   Neuron* temp_neuron = new LinearNeuron(false, false);
   std::vector<Neuron*> input_neurons;
   for(int i = 0; i < 5; i++)
@@ -34,8 +33,7 @@ int main(int argc, char *argv[]) {
   std::vector<float> W_o {0.0370,  0.3953,  0.6000, -0.6779, -0.4355};
   std::vector<float> initial_values {1.4, 0.2, 1.6, 0.54, 1.02};
   for(int i = 0; i< 5; i++){
-    Synapse* syn = new Synapse(input_neurons[i], temp_neuron, 0, 0);
-    lstm_neuron->add_synapse(syn, W_i[i], W_f[i], W_g[i], W_o[i]);
+    lstm_neuron->add_synapse(input_neurons[i], W_i[i], W_f[i], W_g[i], W_o[i]);
     input_neurons[i]->value = initial_values[i];
   }
 
@@ -48,10 +46,55 @@ int main(int argc, char *argv[]) {
 
   }
   lstm_neuron->print_gradients();
-
-
-
-
-
-
 }
+
+// Ground truth gradient script
+//import torch
+//from torch import nn
+//import random
+//
+//random.seed(0)
+//torch.random.manual_seed(0)
+//
+//hidden_units = 1
+//rnn = nn.LSTM(5, hidden_units, 1)
+//
+//
+//for name, param in rnn.named_parameters():
+//    print(name)
+//if name == "bias_hh_l0":
+//param.data = param.data*0
+//print(param)
+//
+//
+//inp = torch.zeros(1, 1,5)
+//inp[0,0,0] = 1.4
+//inp[0,0,1] = 0.2
+//inp[0,0,2] = 1.6
+//inp[0,0,3] = 0.54
+//inp[0,0,4] = 1.02
+//
+//
+//h0 = torch.zeros(1, 1, hidden_units)
+//c0 = torch.zeros(1, 1, hidden_units)
+//
+//sum_of_h = None
+//for steps in range(0, 10):
+//print("H = ", h0)
+//print("C = ", c0)
+//output, (h0, c0) = rnn(inp, (h0, c0))
+//if sum_of_h is None:
+//sum_of_h = output
+//else:
+//sum_of_h += output
+//# inp = torch.zeros(1, 1, 5)
+//# print(h0)
+//
+//    sum_of_h.backward()
+//for name, param in rnn.named_parameters():
+//    print("Name", name)
+//# print("Weights", param.data)
+//print("Gradient", param.grad)
+//
+//# rnn(inp)
+//# rnn.parameters()
