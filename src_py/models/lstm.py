@@ -80,6 +80,7 @@ class LSTM_multilayer(nn.Module):
             out_1, hidden[0] = self.lstm_1(input.view(1, 1, -1), hidden[0])
             out_2, hidden[1] = self.lstm_2(torch.cat([input.view(1, 1, -1), out_1], dim=-1), hidden[1])
             out = torch.cat([out_1, out_2], dim=-1)
+            out = self.linear(out)
         out = self.sigmoid(out)
         return out.view((1, -1)), hidden
 
