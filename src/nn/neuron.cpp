@@ -74,11 +74,13 @@ void RecurrentRelu::compute_gradient_of_all_synapses(std::vector<float> predicti
   float incoming_gradient_sum = 0;
   int counter = 0;
   for (auto synapse: this->outgoing_synapses) {
-    synapse->gradient = this->value * prediction_error_list[counter];
-    incoming_gradient_sum +=
-        prediction_error_list[counter] * synapse->output_neuron->backward(synapse->output_neuron->value)
-            * synapse->weight;
-    counter++;
+    if(synapse->output_neuron->is_output_neuron) {
+      synapse->gradient = this->value * prediction_error_list[counter];
+      incoming_gradient_sum +=
+          prediction_error_list[counter] * synapse->output_neuron->backward(synapse->output_neuron->value)
+              * synapse->weight;
+      counter++;
+    }
   }
 
 //  Then we update the trace value for RTRL computation of all the parameters

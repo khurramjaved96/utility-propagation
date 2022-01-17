@@ -97,6 +97,91 @@ class RecurrentRelu : public Neuron {
 
 };
 
+class LSTM : public Neuron{
+
+//  Variables for making predictions
+  std::vector<float> w_i;
+  std::vector<float> w_f;
+  std::vector<float> w_g;
+  std::vector<float> w_o;
+
+
+
+  float u_i, u_f, u_g, u_o;
+  float b_i, b_f, b_g, b_o;
+  float c;
+  float h;
+  float old_c;
+  float old_h;
+  float i_val;
+  float f;
+  float g;
+  float o;
+
+//  Variables for computing the gradient
+  std::vector<float> Hw_i;
+  std::vector<float> Hw_f;
+  std::vector<float> Hw_g;
+  std::vector<float> Hw_o;
+
+  std::vector<float> Cw_i;
+  std::vector<float> Cw_f;
+  std::vector<float> Cw_g;
+  std::vector<float> Cw_o;
+
+  float Hu_i, Hu_f, Hu_g, Hu_o;
+  float Cu_i, Cu_f, Cu_g, Cu_o;
+
+  float Hb_i, Hb_f, Hb_g, Hb_o;
+  float Cb_i, Cb_f, Cb_g, Cb_o;
+
+
+//  Variable for storing gradients
+  std::vector<float> Gw_i;
+  std::vector<float> Gw_f;
+  std::vector<float> Gw_g;
+  std::vector<float> Gw_o;
+
+  float Gu_i, Gu_f, Gu_g, Gu_o;
+
+  float Gb_i, Gb_f, Gb_g, Gb_o;
+
+
+
+
+ public:
+
+  void accumulate_gradient();
+
+  void print_gradients();
+
+  void add_synapse(Synapse* s, float w_i, float w_f, float w_g, float w_o);
+
+  float old_value;
+
+  bool learning = true;
+
+  void disable_learning();
+
+  void enable_learning();
+
+  void compute_gradient_of_all_synapses(std::vector<float> prediction_error_list);
+
+  void update_value();
+
+  float backward(float output_grad);
+
+  float forward(float temp_value);
+
+  Synapse* recurrent_synapse;
+
+  LSTM();
+
+  void fire();
+
+
+};
+
 class BiasNeuron : public Neuron {
  public:
   BiasNeuron();
