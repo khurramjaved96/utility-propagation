@@ -23,7 +23,7 @@ from src_py.utils.utils import get_types
 from src_py.utils.logging_manager import LoggingManager
 from src_py.envs.mnist import MNIST
 from src_py.models.rnn import RNN
-from src_py.models.lstm import LSTM
+from src_py.models.lstm import LSTM, LSTM_multilayer
 
 
 def set_random_seed(seed: int) -> None:
@@ -36,7 +36,7 @@ def set_random_seed(seed: int) -> None:
     torch.manual_seed(seed)
 
 
-def evaluate(model, test_iterator, loss, logger, epoch, step, device, args):
+def evaluate(model, test_iterator, loss, logger, epoch, step, device):
     print("")
     model.eval()
     hidden = model.reset_state()
@@ -45,9 +45,6 @@ def evaluate(model, test_iterator, loss, logger, epoch, step, device, args):
     test_step = 0
     for _, inp, label in test_iterator:
         test_step += 1
-        if test_step // 28 >= args.n_timesteps:
-            model.reset_state()
-            break
 
         with torch.no_grad():
             prediction, hidden = model(
@@ -87,14 +84,15 @@ def main():
     parser.add_argument( "-r", "--run-id", help="run id (default: datetime)", default=datetime.now().strftime("%d%H%M%S%f")[:-5], type=int,)
     parser.add_argument("-s", "--seed", help="seed", default=0, type=int)
     parser.add_argument( "--db", help="database name", default="", type=str,)
-    parser.add_argument( "--db-prefix", help="database name prefix", default="hshah1_", type=str,)
+    parser.add_argument( "--db-prefix", help="database name prefix (change with username for ComputeCanada)", default="hshah1_", type=str,)
     parser.add_argument( "-c", "--comment", help="comment for the experiment (can be used to filter within one db)", default="", type=str,)
-    parser.add_argument( "--n-timesteps", help="number of timesteps", default=640000, type=int)
+    parser.add_argument( "--n-timesteps", help="number of timesteps", default=430000, type=int)
     parser.add_argument( "--hidden-size", help="size of the hidden recurrent layer", default=128, type=int)
     parser.add_argument( "--n_layers", help="number of layers", default=1, type=int)
-    parser.add_argument( "--model", help="model to use: RNN or LSTM", default="LSTM", type=str,)
+    parser.add_argument( "--model", help="model to use: RNN or LSTM, LSTM_multilayer", default="LSTM", type=str,)
+    parser.add_argument('--sparse', help='sparse hidden weights (0: dense, 1: sparse - default)', default=1, type=int)
 
-    parser.add_argument("--step-size", help="step size", default=1e-4, type=float)
+    parser.add_argument("--step-size", help="step size", default=1e-1, type=float)
 
     args = parser.parse_args()
     training_metrics = None
@@ -129,6 +127,13 @@ def main():
             ["int", "int", "int", "real", "real"],
             ["run_id", "epoch", "timestep"],
         )
+        weight_metrics = Metric(
+            args.db,
+            "weight_metrics",
+            ["run_id", "epoch", "timestep", "linear_weights" ],
+            ["int", "int", "int", "real"],
+            ["run_id", "epoch", "timestep"],
+        )
     # fmt: on
 
     logger = LoggingManager(
@@ -161,16 +166,30 @@ def main():
             n_layers=args.n_layers,
             device=device,
         ).to(device)
+    elif args.model == "LSTM_multilayer":
+        model = LSTM_multilayer(
+            input_size=28,
+            hidden_size=args.hidden_size,
+            output_size=10,
+            n_layers=args.n_layers,
+            device=device,
+        ).to(device)
 
-    opt = optim.RMSprop(model.parameters(), lr=args.step_size)
+    if args.sparse:
+        mask = torch.zeros(args.hidden_size*4, args.hidden_size)
+        for a in range(0, 4*args.hidden_size, args.hidden_size):
+            mask[a: a + args.hidden_size, :] = torch.eye(args.hidden_size)
+        for name, param in model.named_parameters():
+            if("weight_hh" in name):
+                param.data = param.data*mask
+
+    opt = optim.SGD(model.parameters(), lr=args.step_size)
 
     step = 0
     running_error = None
     running_acc = None
     test_error = 0
     test_acc = 0
-    # loss = nn.CrossEntropyLoss()
-    # cross_entropy = loss(prediction, torch.tensor([label]))
     loss = nn.MSELoss()
 
     start = timer()
@@ -184,8 +203,11 @@ def main():
             for _, inp, label in iterator:
                 step += 1
                 if step // 28 >= args.n_timesteps:
-                    model.reset_state()
+                    hidden = model.reset_state()
                     break
+                if step % (280000 * 6 * 3) == 0 and args.model == "LSTM_multilayer":
+                    print("Freezing LSTM 1st layer weights...")
+                    model.start_stage_2_training()
 
                 prediction, hidden = model(
                     torch.FloatTensor(inp).unsqueeze(dim=0).to(device), hidden
@@ -194,7 +216,6 @@ def main():
                 if label is not None:
                     targets = torch.FloatTensor(np.zeros(10)).to(device)
                     targets[label] = 1
-                    # cross_entropy = -torch.sum(targets * torch.log(torch.squeeze(prediction) + eps))
                     error = loss(prediction, targets.unsqueeze(dim=0))
 
                     error.backward()
@@ -232,6 +253,10 @@ def main():
                     )
                     opt.zero_grad()
                     hidden = model.reset_state()
+                    if args.sparse:
+                        for name, param in model.named_parameters():
+                            if("weight_hh" in name):
+                                param.data = param.data*mask
 
                 if step % 280000 == 0:
                     test_iterator = tqdm(mnist.sequential_iterator(split="test"))
@@ -243,8 +268,10 @@ def main():
                         epoch,
                         step,
                         device,
-                        args,
                     )
+                if step % (280000 * 6) == 1:
+                    print("magnitude of linear weights: ")
+                    print(torch.sum(torch.abs(model.linear.weight), dim=0).detach())
     except:
         state_comment = "killed"
         print("failed... quitting")
