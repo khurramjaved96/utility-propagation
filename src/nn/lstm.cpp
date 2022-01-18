@@ -14,8 +14,7 @@
 #include "../../include/utils.h"
 #include "../../include/nn/utils.h"
 
-
-LSTM::LSTM() : Neuron(false, false) {
+LSTM::LSTM(float ui, float uf, float ug, float uo, float bi, float bf, float bg, float bo) : Neuron(false, false) {
   Hu_i = Hu_f = Hu_g = Hu_o = 0;
   Cu_i = Cu_f = Cu_g = Cu_o = 0;
   Hb_i = Hb_f = Hb_g = Hb_o = 0;
@@ -25,15 +24,15 @@ LSTM::LSTM() : Neuron(false, false) {
   Gu_i = Gu_f = Gu_g = Gu_o = 0;
 
 //  Order: i|f|g|o
-  u_i =  0.3632;
-  u_f =  0.8304;
-  u_g = -0.2058;
-  u_o =  0.7483;
+  u_i = ui;
+  u_f = uf;
+  u_g = ug;
+  u_o = uo;
 
-  b_i = -0.1612;
-  b_f = 0.1058;
-  b_g = 0.9055;
-  b_o = -0.9277;
+  b_i = bi;
+  b_f = bf;
+  b_g = bg;
+  b_o = bo;
 }
 
 float LSTM::forward(float temp_value) {
@@ -46,25 +45,25 @@ float LSTM::backward(float output_grad) {
 
 void LSTM::print_gradients() {
   std::cout << "W_i gradients\n";
-  for(int i = 0; i < this->w_i.size(); i++){
+  for (int i = 0; i < this->w_i.size(); i++) {
     std::cout << Gw_i[i] << ", ";
   }
   std::cout << "\n";
 
   std::cout << "W_f gradients\n";
-  for(int i = 0; i < this->w_f.size(); i++){
+  for (int i = 0; i < this->w_f.size(); i++) {
     std::cout << Gw_f[i] << ", ";
   }
   std::cout << "\n";
 
   std::cout << "W_g gradients\n";
-  for(int i = 0; i < this->w_g.size(); i++){
+  for (int i = 0; i < this->w_g.size(); i++) {
     std::cout << Gw_g[i] << ", ";
   }
   std::cout << "\n";
 
   std::cout << "W_o gradients\n";
-  for(int i = 0; i < this->w_g.size(); i++){
+  for (int i = 0; i < this->w_g.size(); i++) {
     std::cout << Gw_o[i] << ", ";
   }
   std::cout << "\n";
@@ -76,17 +75,16 @@ void LSTM::print_gradients() {
   std::cout << "Recurrent connection \n";
   //  Order: i|f|g|o
   std::cout << Gu_i << " " << Gu_f << " " << Gu_g << " " << Gu_o << std::endl;
- }
+}
 
 void LSTM::fire() {
   this->neuron_age++;
-  this->old_value = this->value;
-  this->value = this->forward(value_before_firing);
+  std::cout << "No need to call fire for LSTM\n";
 }
 
-void LSTM::compute_gradient_of_all_synapses(std::vector<float> prediction_error_list) {
+void LSTM::compute_gradient_of_all_synapses() {
   std::vector<float> x;
-  for(auto &it: this->incoming_neurons){
+  for (auto &it: this->incoming_neurons) {
     x.push_back(it->value);
   }
 
@@ -94,52 +92,52 @@ void LSTM::compute_gradient_of_all_synapses(std::vector<float> prediction_error_
 
 //  Computing terms that are reused to save flops
 
-  float LHS_g = (1-(g*g));
-  float LHS_f = f*(1-f);
-  float LHS_i = i_val*(1-i_val);
-  float LHS_o = o*(1-o);
+  float LHS_g = (1 - (g * g));
+  float LHS_f = f * (1 - f);
+  float LHS_i = i_val * (1 - i_val);
+  float LHS_o = o * (1 - o);
   float tanh_of_c = tanh(c);
 
-  
+
 //  Section 1.1
 
-  for(int i = 0; i < n; i++){
-    float dg_dWi =  LHS_g * (u_g*Hw_i[i]);
-    float df_dWi = LHS_f * (u_f*Hw_i[i]);
-    float di_dWi = LHS_i * (x[i] + u_i*Hw_i[i]);
-    float do_dWi = LHS_o * (u_o*Hw_i[i]);
-    Cw_i[i] = f * Cw_i[i] + old_c * df_dWi + i_val * dg_dWi + g*di_dWi;
-    Hw_i[i] = o * (1-tanh_of_c*tanh_of_c)* Cw_i[i] +  tanh_of_c*do_dWi;
+  for (int i = 0; i < n; i++) {
+    float dg_dWi = LHS_g * (u_g * Hw_i[i]);
+    float df_dWi = LHS_f * (u_f * Hw_i[i]);
+    float di_dWi = LHS_i * (x[i] + u_i * Hw_i[i]);
+    float do_dWi = LHS_o * (u_o * Hw_i[i]);
+    Cw_i[i] = f * Cw_i[i] + old_c * df_dWi + i_val * dg_dWi + g * di_dWi;
+    Hw_i[i] = o * (1 - tanh_of_c * tanh_of_c) * Cw_i[i] + tanh_of_c * do_dWi;
   }
 
 //  Section 1.4
-  for(int i = 0; i < n; i++){
-    float dg_dWF =  LHS_g * (u_g*Hw_f[i]);
-    float df_dWF = LHS_f * (x[i] + u_f*Hw_f[i]);
-    float di_dWF = LHS_i * (u_i*Hw_f[i]);
-    float do_dWF = LHS_o * (u_o*Hw_f[i]);
-    Cw_f[i] = f * Cw_f[i] + old_c * df_dWF + i_val * dg_dWF + g*di_dWF;
-    Hw_f[i] = o * (1-tanh_of_c*tanh_of_c)* Cw_f[i] +  tanh_of_c*do_dWF;
+  for (int i = 0; i < n; i++) {
+    float dg_dWF = LHS_g * (u_g * Hw_f[i]);
+    float df_dWF = LHS_f * (x[i] + u_f * Hw_f[i]);
+    float di_dWF = LHS_i * (u_i * Hw_f[i]);
+    float do_dWF = LHS_o * (u_o * Hw_f[i]);
+    Cw_f[i] = f * Cw_f[i] + old_c * df_dWF + i_val * dg_dWF + g * di_dWF;
+    Hw_f[i] = o * (1 - tanh_of_c * tanh_of_c) * Cw_f[i] + tanh_of_c * do_dWF;
   }
 
 //  Section 1.5
-  for(int i = 0; i < n; i++){
-    float dg_dWo =  LHS_g * (u_g*Hw_o[i]);
-    float df_dWo = LHS_f * (u_f*Hw_o[i]);
-    float di_dWo = LHS_i * (u_i*Hw_o[i]);
-    float do_dWo = LHS_o * (x[i] + u_o*Hw_o[i]);
-    Cw_o[i] = f * Cw_o[i] + old_c * df_dWo + i_val * dg_dWo + g*di_dWo;
-    Hw_o[i] = o * (1-tanh_of_c*tanh_of_c)* Cw_o[i] +  tanh_of_c*do_dWo;
+  for (int i = 0; i < n; i++) {
+    float dg_dWo = LHS_g * (u_g * Hw_o[i]);
+    float df_dWo = LHS_f * (u_f * Hw_o[i]);
+    float di_dWo = LHS_i * (u_i * Hw_o[i]);
+    float do_dWo = LHS_o * (x[i] + u_o * Hw_o[i]);
+    Cw_o[i] = f * Cw_o[i] + old_c * df_dWo + i_val * dg_dWo + g * di_dWo;
+    Hw_o[i] = o * (1 - tanh_of_c * tanh_of_c) * Cw_o[i] + tanh_of_c * do_dWo;
   }
 
 //  Section 1.6
-  for(int i = 0; i < n; i++){
-    float dg_dWg = LHS_g * (x[i] + u_g*Hw_g[i]);
-    float df_dWg = LHS_f * (u_f*Hw_g[i]);
-    float di_dWg = LHS_i * (u_i*Hw_g[i]);
-    float do_dWg = LHS_o * (u_o*Hw_g[i]);
-    Cw_g[i] = f * Cw_g[i] + old_c * df_dWg + i_val * dg_dWg + g*di_dWg;
-    Hw_g[i] = o * (1-tanh_of_c*tanh_of_c)* Cw_g[i] +  tanh_of_c*do_dWg;
+  for (int i = 0; i < n; i++) {
+    float dg_dWg = LHS_g * (x[i] + u_g * Hw_g[i]);
+    float df_dWg = LHS_f * (u_f * Hw_g[i]);
+    float di_dWg = LHS_i * (u_i * Hw_g[i]);
+    float do_dWg = LHS_o * (u_o * Hw_g[i]);
+    Cw_g[i] = f * Cw_g[i] + old_c * df_dWg + i_val * dg_dWg + g * di_dWg;
+    Hw_g[i] = o * (1 - tanh_of_c * tanh_of_c) * Cw_g[i] + tanh_of_c * do_dWg;
   }
 
 
@@ -227,27 +225,99 @@ void LSTM::compute_gradient_of_all_synapses(std::vector<float> prediction_error_
   }
 }
 
-void LSTM::accumulate_gradient() {
-  int n = this->w_f.size();
-  for(int counter = 0; counter < n; counter++) {
-    Gw_f[counter] += Hw_f[counter];
-    Gw_i[counter] += Hw_i[counter];
-    Gw_o[counter] += Hw_o[counter];
-    Gw_g[counter] += Hw_g[counter];
+int LSTM::get_users() {
+  return users;
+}
+
+void LSTM::increment_user() {
+  users++;
+}
+
+void LSTM::decrement_user() {
+  users--;
+}
+
+void LSTM::zero_grad() {
+
+  Gb_i = Gb_f = Gb_g = Gb_o = 0;
+  Gu_i = Gu_f = Gu_g = Gu_o = 0;
+
+  for (int counter = 0; counter < Hw_f.size(); counter++) {
+
+    this->Gw_i[counter] = 0;
+    this->Gw_f[counter] = 0;
+    this->Gw_g[counter] = 0;
+    this->Gw_o[counter] = 0;
+
   }
-  Gb_f += Hb_f;
-  Gb_i += Hb_i;
-  Gb_o += Hb_o;
-  Gb_g += Hb_g;
-  Gu_f += Hu_f;
-  Gu_i += Hu_i;
-  Gu_o += Hu_o;
-  Gu_g += Hu_g;
+
+}
+
+void LSTM::reset_state() {
+  Hu_i = Hu_f = Hu_g = Hu_o = 0;
+  Cu_i = Cu_f = Cu_g = Cu_o = 0;
+  Hb_i = Hb_f = Hb_g = Hb_o = 0;
+  Cb_i = Cb_f = Cb_g = Cb_o = 0;
+
+  for (int counter = 0; counter < Hw_f.size(); counter++) {
+    this->Hw_i[counter] = 0;
+    this->Hw_f[counter] = 0;
+    this->Hw_g[counter] = 0;
+    this->Hw_o[counter] = 0;
+
+    this->Cw_i[counter] = 0;
+    this->Cw_f[counter] = 0;
+    this->Cw_g[counter] = 0;
+    this->Cw_o[counter] = 0;
+
+  }
+
+  h = 0;
+  c = 0;
+
+}
+
+void LSTM::accumulate_gradient(float incoming_grad) {
+  int n = this->w_f.size();
+  for (int counter = 0; counter < n; counter++) {
+    Gw_f[counter] += Hw_f[counter] * incoming_grad;
+    Gw_i[counter] += Hw_i[counter] * incoming_grad;
+    Gw_o[counter] += Hw_o[counter] * incoming_grad;
+    Gw_g[counter] += Hw_g[counter] * incoming_grad;
+  }
+  Gb_f += Hb_f * incoming_grad;
+  Gb_i += Hb_i * incoming_grad;
+  Gb_o += Hb_o * incoming_grad;
+  Gb_g += Hb_g * incoming_grad;
+  Gu_f += Hu_f * incoming_grad;
+  Gu_i += Hu_i * incoming_grad;
+  Gu_o += Hu_o * incoming_grad;
+  Gu_g += Hu_g * incoming_grad;
 };
 
+
+void LSTM::update_weights(float step_size) {
+  int n = this->w_f.size();
+  for (int counter = 0; counter < n; counter++) {
+    w_f[counter] += Gw_f[counter] * step_size;
+    w_i[counter] += Gw_i[counter] * step_size;
+    w_o[counter] += Gw_o[counter] * step_size;
+    w_g[counter] += Gw_g[counter] * step_size;
+  }
+
+  b_f += Gb_f * step_size;
+  b_i += Gb_i * step_size;
+  b_o += Gb_o * step_size;
+  b_g += Gb_g * step_size;
+  u_f += Gu_f * step_size;
+  u_i += Gu_i * step_size;
+  u_o += Gu_o * step_size;
+  u_g += Gu_g * step_size;
+}
+
+
 void LSTM::update_value() {
-  std::cout << "H = " << h << std::endl;
-  std::cout << "C = " << c << std::endl;
+
   this->value_before_firing = 0;
   old_h = h;
   old_c = c;
@@ -278,17 +348,27 @@ void LSTM::update_value() {
   f += u_f * old_h;
   o += u_o * old_h;
 
+
 //  Applying non-linear transformations and updating the hidden state;
   i_val = sigmoid(i_val);
   f = sigmoid(f);
   o = sigmoid(o);
   g = tanh(g);
+
+
   c = f * old_c + i_val * g;
   h = o * tanh(c);
+//  std::cout << "LSTM status " << i_val << " " << f << " " << o << " " << g << std::endl;
+//  std::cout << "H = " << h << std::endl;
+  this->value = h;
   this->value_before_firing = h;
 
 }
-//
+
+float LSTM::get_hidden_state() {
+  return this->h;
+}
+
 void LSTM::add_synapse(Neuron *s, float w_i, float w_f, float w_g, float w_o) {
   this->incoming_neurons.push_back(s);
   this->w_i.push_back(w_i);

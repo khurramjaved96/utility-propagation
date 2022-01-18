@@ -19,8 +19,17 @@
 
 int main(int argc, char *argv[]) {
 
+  float u_i =  0.3632;
+  float u_f =  0.8304;
+  float u_g = -0.2058;
+  float u_o =  0.7483;
 
-  LSTM* lstm_neuron = new LSTM();
+  float b_i = -0.1612;
+  float b_f = 0.1058;
+  float b_g = 0.9055;
+  float b_o = -0.9277;
+
+  LSTM* lstm_neuron = new LSTM(u_i, u_f, u_g, u_o, b_i, b_f, b_g, b_o);
   Neuron* temp_neuron = new LinearNeuron(false, false);
   std::vector<Neuron*> input_neurons;
   for(int i = 0; i < 5; i++)
@@ -37,12 +46,12 @@ int main(int argc, char *argv[]) {
     input_neurons[i]->value = initial_values[i];
   }
 
-
-  for(int i = 0; i < 10; i++){
+//
+  for(int i = 0; i < 10000; i++){
     lstm_neuron->update_value();
     lstm_neuron->fire();
-    lstm_neuron->compute_gradient_of_all_synapses(W_i);
-    lstm_neuron->accumulate_gradient();
+    lstm_neuron->compute_gradient_of_all_synapses();
+    lstm_neuron->accumulate_gradient(1);
 
   }
   lstm_neuron->print_gradients();

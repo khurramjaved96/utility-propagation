@@ -146,14 +146,31 @@ class LSTM : public Neuron{
 
   float Gb_i, Gb_f, Gb_g, Gb_o;
 
+  int users;
 
-  std::vector<Neuron *> incoming_neurons;
+
 
  public:
 
-  void accumulate_gradient();
+  std::vector<Neuron *> incoming_neurons;
+
+  int get_users();
+
+  void increment_user();
+
+  void decrement_user();
+
+  void reset_state();
+
+  void zero_grad();
+
+  void accumulate_gradient(float incoming_grad);
 
   void print_gradients();
+
+  float get_hidden_state();
+
+  void update_weights(float step_size);
 
   void add_synapse(Neuron* s, float w_i, float w_f, float w_g, float w_o);
 
@@ -165,7 +182,7 @@ class LSTM : public Neuron{
 
   void enable_learning();
 
-  void compute_gradient_of_all_synapses(std::vector<float> prediction_error_list);
+  void compute_gradient_of_all_synapses();
 
   void update_value();
 
@@ -175,7 +192,7 @@ class LSTM : public Neuron{
 
   Synapse* recurrent_synapse;
 
-  LSTM();
+  LSTM(float ui, float uf, float ug, float uo, float bi, float bf, float bg, float bo);
 
   void fire();
 
