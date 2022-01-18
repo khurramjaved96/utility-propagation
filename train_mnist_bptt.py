@@ -91,6 +91,7 @@ def main():
     parser.add_argument( "--n_layers", help="number of layers", default=1, type=int)
     parser.add_argument( "--model", help="model to use: RNN or LSTM, LSTM_multilayer", default="LSTM", type=str,)
     parser.add_argument('--sparse', help='sparse hidden weights (0: dense, 1: sparse - default)', default=1, type=int)
+    parser.add_argument('--echo-state', help='echo state (for LSTM only), (0: disable - default, 1: enable)', default=0, type=int)
 
     parser.add_argument("--step-size", help="step size", default=1e-1, type=float)
 
@@ -182,6 +183,10 @@ def main():
         for name, param in model.named_parameters():
             if("weight_hh" in name):
                 param.data = param.data*mask
+
+    if args.echo_state:
+        assert args.model == "LSTM", f"impl for LSTM only"
+        model.lstm.requires_grad_(False)
 
     opt = optim.SGD(model.parameters(), lr=args.step_size)
 
@@ -295,6 +300,7 @@ def main():
                 ]
             )
         logger.commit_logs()
+        #from IPython import embed; embed()
 
 
 if __name__ == "__main__":
