@@ -174,5 +174,7 @@ void Synapse::update_weight() {
         this->weight = 0;
     }
   }
+  this->credit = 0;
+  this->gradient = 0;
 }
 
