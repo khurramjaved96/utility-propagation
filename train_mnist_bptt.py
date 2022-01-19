@@ -86,11 +86,11 @@ def main():
     parser.add_argument( "--db", help="database name", default="", type=str,)
     parser.add_argument( "--db-prefix", help="database name prefix (change with username for ComputeCanada)", default="hshah1_", type=str,)
     parser.add_argument( "-c", "--comment", help="comment for the experiment (can be used to filter within one db)", default="", type=str,)
-    parser.add_argument( "--n-timesteps", help="number of timesteps", default=430000, type=int)
+    parser.add_argument( "--n-timesteps", help="number of timesteps", default=640000, type=int)
     parser.add_argument( "--hidden-size", help="size of the hidden recurrent layer", default=128, type=int)
     parser.add_argument( "--n_layers", help="number of layers", default=1, type=int)
     parser.add_argument( "--model", help="model to use: RNN or LSTM, LSTM_multilayer", default="LSTM", type=str,)
-    parser.add_argument('--sparse', help='sparse hidden weights (0: dense, 1: sparse - default)', default=1, type=int)
+    parser.add_argument('--sparse', help='sparse hidden weights (0: dense - default, 1: sparse)', default=0, type=int)
     parser.add_argument('--echo-state', help='echo state (for LSTM only), (0: disable - default, 1: enable)', default=0, type=int)
 
     parser.add_argument("--step-size", help="step size", default=1e-1, type=float)
@@ -166,6 +166,7 @@ def main():
             output_size=10,
             n_layers=args.n_layers,
             device=device,
+            seed=args.seed
         ).to(device)
     elif args.model == "LSTM_multilayer":
         model = LSTM_multilayer(
@@ -174,6 +175,7 @@ def main():
             output_size=10,
             n_layers=args.n_layers,
             device=device,
+            seed=args.seed
         ).to(device)
 
     if args.sparse:

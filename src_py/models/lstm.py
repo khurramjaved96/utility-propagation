@@ -4,8 +4,9 @@ import torch.nn.functional as F
 
 
 class LSTM(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size, n_layers, device):
+    def __init__(self, input_size, hidden_size, output_size, n_layers, device, seed):
         super(LSTM, self).__init__()
+        torch.manual_seed(seed)
 
         self.hidden_size = hidden_size
         self.device = device
@@ -24,7 +25,7 @@ class LSTM(nn.Module):
         out, hidden = self.lstm(input.view(1, 1, -1), hidden)
         out = self.linear(out)
         # out = F.softmax(out, dim=2)
-        out = self.sigmoid(out)
+        #out = self.sigmoid(out)
         return out.view((1, -1)), hidden
 
     def reset_state(self):
@@ -35,8 +36,9 @@ class LSTM(nn.Module):
 
 
 class LSTM_multilayer(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size, n_layers, device):
+    def __init__(self, input_size, hidden_size, output_size, n_layers, device, seed):
         super(LSTM_multilayer, self).__init__()
+        torch.manual_seed(seed)
 
         assert n_layers == 1, f"dont..."
         self.hidden_size = hidden_size
