@@ -217,7 +217,8 @@ def main():
                     print("Freezing LSTM 1st layer weights...")
                     model.start_stage_2_training()
 
-                if (step % args.truncation_length) == 0:
+                # detach except for last truncation_length steps per img
+                if (not 28 - ((step-1) %28) <= args.truncation_length):
                     hidden = tuple(h.detach() for h in hidden)
                 prediction, hidden = model(
                     torch.FloatTensor(inp).unsqueeze(dim=0).to(device), hidden
