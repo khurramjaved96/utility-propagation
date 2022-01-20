@@ -92,6 +92,7 @@ def main():
     parser.add_argument( "--model", help="model to use: RNN or LSTM, LSTM_multilayer", default="LSTM", type=str,)
     parser.add_argument('--sparse', help='sparse hidden weights (0: dense - default, 1: sparse)', default=0, type=int)
     parser.add_argument('--echo-state', help='echo state (for LSTM only), (0: disable - default, 1: enable)', default=0, type=int)
+    parser.add_argument('--truncation-length', help='trunctation length', default=100000, type=int)
 
     parser.add_argument("--step-size", help="step size", default=1e-1, type=float)
 
@@ -216,6 +217,8 @@ def main():
                     print("Freezing LSTM 1st layer weights...")
                     model.start_stage_2_training()
 
+                if (step % args.truncation_length) == 0:
+                    hidden = tuple(h.detach() for h in hidden)
                 prediction, hidden = model(
                     torch.FloatTensor(inp).unsqueeze(dim=0).to(device), hidden
                 )
