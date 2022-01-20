@@ -77,7 +77,7 @@ def evaluate(model, test_iterator, loss, logger, epoch, step, device):
 def main():
 
     # make sure run_ids dont overlap when using parallel sweeps
-    # sleep(random.random() * 10)
+    sleep(random.random() * 10)
 
     # fmt: off
     parser = argparse.ArgumentParser()
