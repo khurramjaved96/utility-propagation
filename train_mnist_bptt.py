@@ -93,6 +93,7 @@ def main():
     parser.add_argument('--sparse', help='sparse hidden weights (0: dense - default, 1: sparse)', default=0, type=int)
     parser.add_argument('--echo-state', help='echo state (for LSTM only), (0: disable - default, 1: enable)', default=0, type=int)
     parser.add_argument('--truncation-length', help='trunctation length', default=100000, type=int)
+    parser.add_argument('--n-threads', help='max threads to use', default=8, type=int)
 
     parser.add_argument("--step-size", help="step size", default=1e-1, type=float)
 
@@ -149,6 +150,8 @@ def main():
 
     eps = sys.float_info.epsilon
     set_random_seed(args.seed)
+
+    torch.set_num_threads(args.n_threads)
     if torch.cuda.is_available():
         device = torch.device("cuda")
     else:
@@ -269,7 +272,7 @@ def main():
                             if("weight_hh" in name):
                                 param.data = param.data*mask
 
-                if step % 280000 == 0:
+                if step % (280000*6) == 0:
                     test_iterator = tqdm(mnist.sequential_iterator(split="test"))
                     test_error, test_acc = evaluate(
                         copy.deepcopy(model),
@@ -280,9 +283,6 @@ def main():
                         step,
                         device,
                     )
-                if step % (280000 * 6) == 1:
-                    print("magnitude of linear weights: ")
-                    print(torch.sum(torch.abs(model.linear.weight), dim=0).detach())
     except:
         state_comment = "killed"
         print("failed... quitting")
