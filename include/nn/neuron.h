@@ -25,6 +25,7 @@ class Neuron : public dynamic_elem {
   bool is_bias_unit;
   int layer_number;
   float value;
+  float pre_sync_value;
   int drinking_age;
   float value_before_firing;
   float neuron_utility;
@@ -148,6 +149,7 @@ class LSTM : public Neuron{
 
   int users;
 
+  float copy_of_h;
 
 
  public:
@@ -159,6 +161,10 @@ class LSTM : public Neuron{
   void increment_user();
 
   void decrement_user();
+
+  void update_value_delay();
+
+  void update_value_sync();
 
   void reset_state();
 
