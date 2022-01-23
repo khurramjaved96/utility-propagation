@@ -13,12 +13,18 @@
 #include "include/nn/utils.h"
 #include "include/experiment/Metric.h"
 
+#include <random>
+#include <algorithm>
 #include "include/environments/mnist/mnist_reader.hpp"
 #include "include/environments/mnist/mnist_utils.hpp"
 
 
 int main(int argc, char *argv[]) {
 
+  static std::mt19937 gen;
+
+  gen.seed(0);
+  std::uniform_real_distribution<float> weight_sampler(-1, 1);
   float u_i =  0.3632;
   float u_f =  0.8304;
   float u_g = -0.2058;
@@ -41,16 +47,27 @@ int main(int argc, char *argv[]) {
   std::vector<float> W_g {-0.3022, -0.1966, -0.9553, -0.6623, -0.4122};
   std::vector<float> W_o {0.0370,  0.3953,  0.6000, -0.6779, -0.4355};
   std::vector<float> initial_values {1.4, 0.2, 1.6, 0.54, 1.02};
-  for(int i = 0; i< 5; i++){
-    lstm_neuron->add_synapse(input_neurons[i], W_i[i], W_f[i], W_g[i], W_o[i]);
-    input_neurons[i]->value = initial_values[i];
+  std::vector<std::vector<float>> inputs;
+  for(int step = 0; step < 1000; step++){
+    std::vector<float> tmp;
+    for(int temp = 0; temp < 5; temp ++)
+      tmp.push_back(weight_sampler(gen));
+
+    inputs.push_back(tmp);
   }
 
+  for(int i = 0; i< 5; i++){
+    lstm_neuron->add_synapse(input_neurons[i], W_i[i], W_f[i], W_g[i], W_o[i]);
+  }
 //
-  for(int i = 0; i < 10000; i++){
-    lstm_neuron->update_value();
-    lstm_neuron->fire();
+  for(int i = 0; i < 1000; i++){
+    for(int j = 0; j< 5; j++){
+      input_neurons[j]->value = inputs[i][j];
+    }
+    print_vector(inputs[i]);
+    lstm_neuron->update_value_sync();
     lstm_neuron->compute_gradient_of_all_synapses();
+//    lstm_neuron->fire();
     lstm_neuron->accumulate_gradient(1);
 
   }

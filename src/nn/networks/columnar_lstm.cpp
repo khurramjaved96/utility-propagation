@@ -16,7 +16,7 @@ ColumnarLSTM::ColumnarLSTM(float step_size,
                            int total_recurrent_features) {
   this->step_size = step_size;
   this->mt.seed(seed);
-  std::uniform_real_distribution<float> weight_sampler(-1, 1);
+  std::uniform_real_distribution<float> weight_sampler(-0.1, 0.1);
 
   for (int i = 0; i < no_of_input_features; i++) {
     LinearNeuron n(true, false);
@@ -50,6 +50,7 @@ ColumnarLSTM::ColumnarLSTM(float step_size,
     predictions.push_back(0);
     errors.push_back(0);
     indexes.push_back(i);
+    bias.push_back(0);
     std::vector<float> prediction_weight_cur_target;
     for(int j = 0; j < this->LSTM_neurons.size(); j++){
       prediction_weight_cur_target.push_back(0);
@@ -66,6 +67,8 @@ void ColumnarLSTM::reset_state() {
 
 void ColumnarLSTM::forward(std::vector<float> inputs) {
 //  Set input neurons value
+//  if(this->time_step%100000 == 99999)
+//    this->step_size *= 0.8;
   for(int i = 0; i < inputs.size(); i++){
     this->input_neurons[i].value = inputs[i];
   }
@@ -87,14 +90,18 @@ void ColumnarLSTM::forward(std::vector<float> inputs) {
         for(int i = 0; i < prediction_weights[index].size(); i++){
           predictions[index] += prediction_weights[index][i]*this->LSTM_neurons[i].value;
         }
+        predictions[index] += bias[index];
+        predictions[index] = sigmoid(predictions[index]);
       });
+
+
 //  std::cout << "Predictions = ";
 //  for(int i = 0; i < predictions.size(); i++)
 //    std::cout << predictions[i] << ",";
 //  std::cout << std::endl;
 }
 
-void ColumnarLSTM::backward(std::vector<float> targets) {
+float ColumnarLSTM::backward(std::vector<float> targets) {
 
   for(int i = 0; i < targets.size(); i++){
     errors[i] = targets[i] - predictions[i];
@@ -107,12 +114,16 @@ void ColumnarLSTM::backward(std::vector<float> targets) {
       [&](int index) {
         float gradient = 0;
         for(int i = 0; i < predictions.size(); i++){
-          gradient += errors[i]*prediction_weights[i][index];
+          gradient += errors[i]*prediction_weights[i][index]*predictions[i]*(1-predictions[i]);
         }
         LSTM_neurons[index].zero_grad();
         LSTM_neurons[index].accumulate_gradient(gradient);
       });
-
+  float error_sum = 0;
+  for(auto er : errors){
+    error_sum += std::abs(er);
+  }
+  return error_sum;
 //  First we compute error, then we call accumulate gradient on the LSTM units
 
 
@@ -133,9 +144,15 @@ void ColumnarLSTM::update_parameters() {
       this->indexes_lstm_cells.end(),
       [&](int index) {
         for(int i = 0; i < predictions.size(); i++){
-          prediction_weights[i][index] += LSTM_neurons[index].value*errors[i]*step_size;
+          prediction_weights[i][index] += LSTM_neurons[index].value*errors[i]*step_size*predictions[i]*(1-predictions[i]);
         }
       });
+
+  for(int i = 0; i < predictions.size(); i++){
+        bias[i] += errors[i]*step_size*predictions[i]*(1-predictions[i]);
+      }
+//  std::cout << "Bias = " << bias[0] << std::endl;
+//  std::cout << "Bias = " << bias[1] << std::endl;
 
 }
 

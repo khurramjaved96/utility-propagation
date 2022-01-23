@@ -3,7 +3,7 @@
 //
 
 #include <iostream>
-#include "include/nn/networks/columnar_lstm.h"
+#include "include/nn/networks/mlp_lstm.h"
 #include "include/utils.h"
 #include "include/nn/utils.h"
 #include "include/experiment/Experiment.h"
@@ -35,11 +35,11 @@ int main(int argc, char *argv[]) {
   std::vector<std::vector<float>> targets_test;
 
 
-  auto network = ColumnarLSTM(my_experiment.get_float_param("step_size"),
-                                  my_experiment.get_int_param("seed"),
-                                  28,
-                                  10,
-                                  my_experiment.get_int_param("features"));
+  auto network = DeepLSTM(my_experiment.get_float_param("step_size"),
+                              my_experiment.get_int_param("seed"),
+                              28,
+                              10,
+                              my_experiment.get_int_param("features"));
 
   for(int counter = 0; counter < total_data_points; counter++){
     std::vector<float> x_temp;
@@ -55,8 +55,17 @@ int main(int argc, char *argv[]) {
   float accuracy = 0.1;
 
   std::cout << images.size() << " " << targets.size() << std::endl;
-
+  int layer_no = 64;
   for (int i = 0; i < my_experiment.get_int_param("steps"); i++) {
+    if (i% my_experiment.get_int_param("freq") == my_experiment.get_int_param("freq") - 1) {
+      for(int i = 0; i < network.LSTM_neurons.size(); i++){
+//        for(int inner = 0; inner < network.prediction_weights[i].size(); inner++)
+          std::cout << "Layer " << i << " weight " << network.prediction_weights[0][i][0] << std::endl;
+
+      }
+      layer_no++;
+    }
+
     int index = index_sampler(mt);
 //    std::cout << "INdex =  " << index << std::endl;
     auto x = images[index];
@@ -65,16 +74,21 @@ int main(int argc, char *argv[]) {
     y[y_index] = 1;
 
     for(int row = 0; row < 28; row ++){
+      if (i% 10000 == 9999) {
+        std::cout << "Row " << row << std::endl;
+        network.print_network_state(layer_no);
+      }
+//      std::cout << "Row = " << row << std::endl;
       std::vector<float> row_x;
       for(int temp = row*28; temp < (row+1)*28; temp++){
         row_x.push_back(x[temp]/256.0);
       }
 //      print_vector(row_x);
-      network.forward(row_x);
+      network.forward(row_x, layer_no);
 
       if(row == 27) {
-        network.backward(y);
-        network.update_parameters();
+        network.backward(y, layer_no);
+        network.update_parameters(layer_no);
 //        print_vector(network.read_output_values());
 //        print_vector(y);
       }
@@ -84,11 +98,11 @@ int main(int argc, char *argv[]) {
 
 
     if(prediction == y_index){
-      accuracy = accuracy*0.999 + 0.001;
+      accuracy = accuracy*0.9999 + 0.0001;
     }
     else
-      accuracy*= 0.999;
-    if(i % 100 == 0){
+      accuracy*= 0.9999;
+    if(i % 1000 == 0){
       std::cout << "Step = " << i << std::endl;
       std::cout << "Accuracy = " << accuracy << std::endl;
 

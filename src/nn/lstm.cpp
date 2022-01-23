@@ -78,8 +78,9 @@ void LSTM::print_gradients() {
 }
 
 void LSTM::fire() {
+  this->value = h;
   this->neuron_age++;
-  std::cout << "No need to call fire for LSTM\n";
+//  std::cout << "No need to call fire for LSTM\n";
 }
 
 void LSTM::compute_gradient_of_all_synapses() {
@@ -274,6 +275,7 @@ void LSTM::reset_state() {
 
   h = 0;
   c = 0;
+  this->value = 0;
 
 }
 
@@ -315,6 +317,50 @@ void LSTM::update_weights(float step_size) {
   u_g += Gu_g * step_size;
 }
 
+void LSTM::update_value_sync() {
+  this->value_before_firing = 0;
+  old_h = h;
+  old_c = c;
+//  Adding bias value
+  i_val = b_i;
+  g = b_g;
+  f = b_f;
+  o = b_o;
+
+  int counter = 0;
+//  Non-bias terms connections except the self connection
+//  for (auto &it: this->incoming_synapses) {
+//    std::cout << it->input_neuron->value << std::endl;
+//  }
+//  exit(0);
+  for (auto &it: this->incoming_neurons) {
+//    std::cout << w_i[counter] << "*" << it->input_neuron->value << std::endl;
+//    std::cout << "ID " << it->id <<  " it->value = " << it->value << std::endl;
+    i_val += this->w_i[counter] * it->value;
+    f += this->w_f[counter] * it->value;
+    g += this->w_g[counter] * it->value;
+    o += this->w_o[counter] * it->value;
+    counter++;
+  }
+
+//  Self connection
+  i_val += u_i * old_h;
+  g += u_g * old_h;
+  f += u_f * old_h;
+  o += u_o * old_h;
+
+
+//  Applying non-linear transformations and updating the hidden state;
+  i_val = sigmoid(i_val);
+  f = sigmoid(f);
+  o = sigmoid(o);
+  g = tanh(g);
+
+
+  c = f * old_c + i_val * g;
+  h = o * tanh(c);
+}
+
 
 void LSTM::update_value() {
 
@@ -335,6 +381,7 @@ void LSTM::update_value() {
 //  exit(0);
   for (auto &it: this->incoming_neurons) {
 //    std::cout << w_i[counter] << "*" << it->input_neuron->value << std::endl;
+//    std::cout << "ID " << it->id <<  " it->value = " << it->value << std::endl;
     i_val += this->w_i[counter] * it->value;
     f += this->w_f[counter] * it->value;
     g += this->w_g[counter] * it->value;
@@ -362,6 +409,8 @@ void LSTM::update_value() {
 //  std::cout << "H = " << h << std::endl;
   this->value = h;
   this->value_before_firing = h;
+//  if(this->id == 29)
+//    std::cout << h << std::endl;
 
 }
 
