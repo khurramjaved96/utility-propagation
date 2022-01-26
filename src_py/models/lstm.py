@@ -25,7 +25,7 @@ class LSTM(nn.Module):
         out, hidden = self.lstm(input.view(1, 1, -1), hidden)
         out = self.linear(out)
         # out = F.softmax(out, dim=2)
-        #out = self.sigmoid(out)
+        out = self.sigmoid(out)
         return out.view((1, -1)), hidden
 
     def reset_state(self):

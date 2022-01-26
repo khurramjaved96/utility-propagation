@@ -77,7 +77,8 @@ def evaluate(model, test_iterator, loss, logger, epoch, step, device):
 def main():
 
     # make sure run_ids dont overlap when using parallel sweeps
-    sleep(random.random() * 10)
+    #sleep(random.random() * 10)
+    # Note: Just use '--delay 1' flag in GNU parallel instead when sweeping. More reliable.
 
     # fmt: off
     parser = argparse.ArgumentParser()
@@ -272,7 +273,7 @@ def main():
                             if("weight_hh" in name):
                                 param.data = param.data*mask
 
-                if step % (280000*6) == 0:
+                if step % 280000 == 0:
                     test_iterator = tqdm(mnist.sequential_iterator(split="test"))
                     test_error, test_acc = evaluate(
                         copy.deepcopy(model),
