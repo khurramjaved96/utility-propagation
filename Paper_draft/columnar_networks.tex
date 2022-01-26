@@ -179,6 +179,337 @@ RTRL can also be approximated to reduce its computational overhead. Ollivier~\et
 \onecolumn 
 \appendix
 
+
+\section{Forward-mode gradient computation of an LSTM cell}
+
+Here we derive the update equations for recursively computing the gradients of a single LSTM based recurrent column. Each column has a single hidden unit. Because all columns are identical, the same update equations can be used to learn the complete Columnar Network.  The state of an LSTM column is updated using following equations: 
+% \begin{equation}
+% \label{lstm}
+\begin{align}
+i(t) &= \sigma( W_{i}^T x_k(t) + u_{i} h(t-1) + b_i) \label{i} \\
+f(t) &= \sigma( W_{f}^T x_k(t) + u_{f} h(t-1) + b_f) \label{f} \\
+o(t) &= \sigma( W_{o}^T x_k(t) + u_{o} h(t-1) + b_o) \label{o} \\
+g(t) &= \phi( W_{g}^T x_k(t) + u_{g} h(t-1) + b_g) \label{g} \\
+c(t) &= f(t)  c(t-1) + i(t) g(t) \label{c} \\
+h(t) &= o(t)  \phi(c(t)) \label{state_update}
+\end{align}
+% \end{equation}
+where $\sigma$ and $\phi$ are the sigmoid and tanh activation functions, $h(t)$ is the state of the column at time $t$ and $ W_{i}^T x_k(t) = \sum_{k=1}^m W_{i_k} x_k(t)$. The derivative of $\sigma(x)$ and $\phi(x)$ w.r.t to $x$ are $\sigma(x)(1-\sigma(x))$ and $(1-\phi^2(x))$ respectively.
+
+Let the length of input vector $x$ be $m$. Then, $W_{i}, W_{f}, W_{o}$ and $W_{g}$ are vectors of length $m$ whereas $u_i, b_i, u_f, b_f, u_o, b_o, u_g$ and $b_g$ are scalars. We want to compute gradient of $h(t)$ with respect to all the parameters. We derive the update equations for $\frac{\partial h(t)}{\partial W_{i}} ,\frac{\partial h(t)}{\partial u_{i}}, $$\frac{\partial h(t)}{\partial b_{i}}, \frac{\partial h(t)}{\partial W_{f}} $$,\frac{\partial h(t)}{\partial u_{f}}, \frac{\partial h(t)}{\partial b_{f}}, $$\frac{\partial h(t)}{\partial W_{o}} ,\frac{\partial h(t)}{\partial u_{o}},$$ \frac{\partial h(t)}{\partial b_{o}}, \frac{\partial h(t)}{\partial W_{g}} ,\frac{\partial h(t)}{\partial u_{g}},$ and $\frac{\partial h(t)}{\partial b_{g}}$ in the following sections. 
+
+\subsection{$\frac{\partial h(t)}{\partial W_{i}}$}
+
+$W_i = (W_{i_1}, W_{i_2}, \cdots, W_{i_m})$ is a vector of length $m$. Since all elements of $W_i$ are symmetric, we show gradient derivation for $W_{i_j}$ without loss of generality. Let
+% \begin{equation}
+\begin{align}
+TH_{W_{i_j}}(t)  & \vcentcolon = \frac{\partial h(t)}{\partial W_{i_j}}  && \textit{(By definition)} \label{def1} \\
+TH_{W_{i_j}}(0)  & \vcentcolon = 0  && \textit{(By definition)} \label{def2} \\
+TC_{W_{i_j}}(t)  & \vcentcolon = \frac{\partial c(t)}{\partial W_{i_j}}  && \textit{(By definition)} \label{def3} \\
+TC_{W_{i_j}}(0)  & \vcentcolon = 0  && \textit{(By definition)}  \label{def4}
+% %   & = (1-z^k(t)) T_{w_{z}}^{ijk}(t-1) + z^k(t) \frac{\partial}{\partial W^{ij}_z}\left (  z^k(t)  \hat{h}^k(t) \right )  && \textit{Using definition 5}\\
+% %   & = (1-z^k(t)) T_{w_{z}}^{ijk}(t-1) + z^k(t) \frac{\partial \hat{h}^k(t)}{\partial W^{ij}_z} + \hat{h}^k(t) \frac{\partial z^k(t)}{\partial W^{ij}_z}  && \textit{test} \textit{Applying chain rule}
+\end{align}
+% \end{equation}
+Then:
+% \begin{equation}
+\begin{align*}
+TH_{W_{i_j}}(t) & = \frac{\partial}{\partial W_{i_j}} \left ( o(t) \phi(c(t)) \right ) && \textit{From equation \ref{state_update} and definition \ref{def1}} \\
+& = o(t) \frac{\partial \phi(c(t))}{\partial W_{i_j}}  + \phi(c(t)) \frac{\partial o(t)}{\partial W_{i_j}}   && \textit{Product rule of differentiation} \\
+&= o(t) (1-\phi^{2}(c(t))) \frac{\partial c(t)}{\partial W_{i_j}}  + \phi(c(t)) \frac{\partial o(t)}{\partial W_{i_j}}   && \textit{Derivative of $\phi(x)$ is (1-$\phi^2(x))$}\\ 
+&= o(t) (1-\phi^{2}(c(t))) TC_{W_{i_j}}(t)  + \phi(c(t)) \frac{\partial o(t)}{\partial W_{i_j}}   && \textit{From definition \ref{def3}}\\ 
+\frac{\partial o(t)}{\partial W_{i_j}} &=  \frac{\partial}{\partial W_{i_j}} \sigma(W_{o}^T x(t) + u_{o} h(t-1) + b_o) && \textit{From equation \ref{o}}\\
+&= \sigma(y)(1-\sigma(y))u_o TH_{W_{i_j}}(t-1) && \textit{Where $y$ equals $W_{o}^T x(t) + u_{o} h(t-1) + b_o$} \\
+TC_{W_{i_j}}(t) &=  \frac{\partial c(t)}{\partial W_{i_j}} && \textit{From definition \ref{def3}} \\ 
+&=  \frac{\partial}{\partial W_{i_j}} (f(t)  c(t-1) + i(t) g(t))  && \textit{From equation \ref{c}} \\
+&= f(t) TC_{W_{i_j}}(t-1) + c(t-1)\frac{\partial f(t)}{ \partial W_{i_j}} + \frac{\partial}{\partial W_{i_j}} ( i(t) g(t) )   && \textit{Product rule and definition \ref{def3}}\\
+&= f(t) TC_{W_{i_j}}(t-1) + c(t-1)\frac{\partial f(t)}{ \partial W_{i_j}} + i(t)\frac{\partial g(t) }{\partial W_{i_j}}  + g(t)\frac{\partial i(t) }{\partial W_{i_j}}  && \textit{Product rule} 
+% %   & = (1-z^k(t)) T_{w_{z}}^{ijk}(t-1) + z^k(t) \frac{\partial}{\partial W^{ij}_z}\left (  z^k(t)  \hat{h}^k(t) \right )  && \textit{Using definition 5}\\
+% %   & = (1-z^k(t)) T_{w_{z}}^{ijk}(t-1) + z^k(t) \frac{\partial \hat{h}^k(t)}{\partial W^{ij}_z} + \hat{h}^k(t) \frac{\partial z^k(t)}{\partial W^{ij}_z}  && \textit{test} \textit{Applying chain rule}
+\end{align*}
+
+
+% \end{equation}
+
+Where gradient of $g(t)$  w.r.t $W_{i_j}$ is:
+% \begin{equation}
+\begin{align*}
+\frac{\partial g(t)}{\partial W_{i_j}} &=  \frac{\partial}{\partial W_{i_j}} \phi(W_{g}^T x(t) + u_{g} h(t-1) + b_g) && \textit{From equation \ref{g}} \\
+&= (1-\phi^2(y))u_g TH_{W_{i_j}}(t-1) && \textit{Where $y$ equals $W_{g}^T x(t) + u_{g} h(t-1) + b_g$} \\
+\end{align*}
+% \end{equation}
+, gradient of $f(t)$  w.r.t $W_{i_j}$ is:
+% \begin{equation}
+\begin{align*}
+\frac{\partial f(t)}{\partial W_{i_j}} &=  \frac{\partial}{\partial W_{i_j}} \sigma(W_{f}^T x(t) + u_{f} h(t-1) + b_f) && \textit{From equation \ref{f}} \\
+&= \sigma(y)(1-\sigma(y))u_f TH_{W_{i_j}}(t-1) && \textit{Where $y$ equals $W_{f}^T x(t) + u_{f} h(t-1) + b_f$} \\
+\end{align*}
+% \end{equation}
+and gradient of $i(t)$ w.r.t $W_{i_j}$ is:
+% \begin{equation}
+\begin{align*}
+\frac{\partial i(t)}{\partial W_{i_j}} &=  \frac{\partial}{\partial W_{i_j}} \sigma(W_{i}^T x(t) + u_{i} h(t-1) + i_f) && \textit{From equation \ref{i}} \\
+&= \sigma(y)(1-\sigma(y)) \left (x_j(t)+ u_i TH_{W_{i_j}}(t-1) \right )&& \textit{Where $y$ equals $W_{i}^T x(t) + u_{i} h(t-1) + b_i$} \\
+\end{align*}
+% \end{equation}
+The derivation shows that using two traces per parameter of $W_i$, it is possible to compute the gradient of $h(t)$ w.r.t $W_i$ recursively. We provide the derivations for parameters $u_i$ and $b_i$ below. We skip the step-by-step derivations for the remaining parameters as they are similar. 
+
+\subsection{$\frac{\partial h(t)}{\partial u_i}$}
+
+% \begin{equation}
+\begin{align}
+TH_{u_{i}}(t)  & \vcentcolon = \frac{\partial h(t)}{\partial u_i}  && \textit{(By definition)}  \label{thu}\\
+TH_{u_{i}}(0)  & \vcentcolon = 0  && \textit{(By definition)}  \\
+TC_{u_{i}}(t)  & \vcentcolon = \frac{\partial c(t)}{\partial u_i}  && \textit{(By definition)}  \label{tcu} \\
+TC_{u_{i}}(0)  & \vcentcolon = 0  && \textit{(By definition)} 
+\end{align}
+% \end{equation}
+
+% \begin{equation}
+\begin{align*}
+TH_{u_i}(t) & = \frac{\partial}{\partial u_i} \left ( o(t) \phi(c(t)) \right ) && \textit{From equation \ref{state_update}} \\
+& = o(t) \frac{\partial \phi(c(t))}{\partial u_i}  + \phi(c(t)) \frac{\partial o(t)}{\partial u_i}   && \textit{Product rule} \\
+&= o(t) (1-\phi^{2}(c(t))) \frac{\partial c(t)}{\partial u_i}  + \phi(c(t)) \frac{\partial o(t)}{\partial u_i}   && \textit{Derivative of $\phi(x)$ is $1-\phi^2(x)$} \\
+&= o(t) (1-\phi^{2}(c(t))) TC_{u_{i}}(t)  + \phi(c(t)) \frac{\partial o(t)}{\partial u_i}   && \textit{Using definition \ref{tcu}} \\
+\frac{\partial o(t)}{\partial u_i} &=  \frac{\partial}{\partial u_i} \sigma(W_{o}^T x(t) + u_{o} h(t-1) + b_o) && \textit{Using equations \ref{o}}\\
+&= \sigma(x)(1-\sigma(x))u_o TH_{u_i}(t-1) && \textit{Where $x$ equal $W_{o}^T x(t) + u_{o} h(t-1) + b_o$} \\
+TC_{u_i}(t) &=  \frac{\partial c(t)}{\partial u_i} && \textit{Definition \ref{tcu}} \\ 
+&=  \frac{\partial}{\partial u_i} (f(t)  c(t-1) + i(t) g(t))  && \textit{From equation \ref{state_update}} \\
+&= f(t) TC_{u_i}(t-1) + c(t-1)\frac{\partial f(t)}{ \partial u_i} + \frac{\partial}{\partial u_i} \left ( i(t) g(t) ) \right )  && \textit{Product rule}\\
+&= f(t) TC_{u_i}(t-1) + c(t-1)\frac{\partial f(t)}{ \partial u_i} + i(t)\frac{\partial g(t) }{\partial u_i}  + g(t)\frac{\partial i(t) }{\partial u_i}  && \textit{Product rule} 
+% %   & = (1-z^k(t)) T_{w_{z}}^{ijk}(t-1) + z^k(t) \frac{\partial}{\partial W^{ij}_z}\left (  z^k(t)  \hat{h}^k(t) \right )  && \textit{Using definition 5}\\
+% %   & = (1-z^k(t)) T_{w_{z}}^{ijk}(t-1) + z^k(t) \frac{\partial \hat{h}^k(t)}{\partial W^{ij}_z} + \hat{h}^k(t) \frac{\partial z^k(t)}{\partial W^{ij}_z}  && \textit{test} \textit{Applying chain rule}
+\end{align*}
+% \end{equation}
+Gradient of  $g(t)$  w.r.t  $u_i$ is:
+% \begin{equation}
+\begin{align*}
+\frac{\partial g(t)}{\partial u_i} &=  \frac{\partial}{\partial u_i} \phi(W_{g}^T x(t) + u_{g} h(t-1) + b_g) && \textit{From equations \ref{state_update}} \\
+&= (1-\phi^2(y))u_g TH_{u_i}(t-1) && \textit{Where $y$ equals $W_{g}^T x(t) + u_{g} h(t-1) + b_g$} \\
+\end{align*}
+% \end{equation}
+, gradient of $f(t)$  w.r.t $u_i$ is:
+% \begin{equation}
+\begin{align*}
+\frac{\partial f(t)}{\partial u_i} &=  \frac{\partial}{\partial u_i} \sigma(W_{f}^T x(t) + u_{f} h(t-1) + b_f) && \textit{From equations 1} \\
+&= \sigma(y)(1-\sigma(y))u_f TH_{u_i}(t-1) && \textit{Where $y$ equals $W_{f}^T x(t) + u_{f} h(t-1) + b_f$} \\
+\end{align*}
+% \end{equation}
+
+and the gradient of $i(t)$  w.r.t $u_i$ is
+% \begin{equation}
+\begin{align*}
+\frac{\partial i(t)}{\partial u_i} &=  \frac{\partial}{\partial u_i} \sigma(W_{i}^T x(t) + u_{i} h(t-1) + b_i) && \textit{Using equations 1} \\
+&= \sigma(y)(1-\sigma(y)) \left (h(t-1)+ u_i TH_{u_{i}}(t-1) \right )&& \textit{Where $y$ equals $W_{i}^T x(t) + u_{i} h(t-1) + b_i$} \\
+\end{align*}
+% \end{equation}
+
+\subsection{$\frac{\partial h(t)}{\partial b_i}$}
+
+% \begin{equation}
+\begin{align}
+TH_{b_i}(t)  & \vcentcolon = \frac{\partial h(t)}{\partial b_i}  && \textit{(By definition)}  \label{thb}\\
+TH_{b_i}(0)  & \vcentcolon = 0  && \textit{(By definition)}  \\
+TC_{b_i}(t)  & \vcentcolon = \frac{\partial c(t)}{\partial b_i}  && \textit{(By definition)}  \label{tcb}\\
+TC_{b_i}(0)  & \vcentcolon = 0  && \textit{(By definition)} 
+\end{align}
+% \end{equation}
+
+% \begin{equation}
+\begin{align*}
+TH_{b_i}(t) & = \frac{\partial}{\partial b_i} \left ( o(t) \phi(c(t)) \right ) && \textit{From equation \ref{state_update}} \\
+& = o(t) \frac{\partial \phi(c(t))}{\partial b_i}  + \phi(c(t)) \frac{\partial o(t)}{\partial b_i}   && \textit{Product rule} \\
+&= o(t) (1-\phi^{2}(c(t))) \frac{\partial c(t)}{\partial b_i}  + \phi(c(t)) \frac{\partial o(t)}{\partial b_i}   && \textit{Derivative of of $\phi(x)$ is $1-\phi^2(x)$}\\ 
+&= o(t) (1-\phi^{2}(c(t))) TC_{b_i}(t)  + \phi(c(t)) \frac{\partial o(t)}{\partial b_i}   && \textit{From definition \ref{tcb} }\\ 
+\frac{\partial o(t)}{\partial b_i} &=  \frac{\partial}{\partial b_i} \sigma(W_{o}^T x(t) + u_{o} h(t-1) + b_o) && \textit{From equations \ref{o}}\\
+&= \sigma(y)(1-\sigma(y))u_o TH_{b_i}(t-1) && \textit{Where $y$ equal $W_{o}^T x(t) + u_{o} h(t-1) + b_o$} \\
+TC_{b_i}(t) &=  \frac{\partial c(t)}{\partial b_i} && \textit{From definition \ref{tcb}} \\ 
+&=  \frac{\partial}{\partial b_i} (f(t)  c(t-1) + i(t) g(t))  && \textit{From equation \ref{c}} \\
+&= f(t) TC_{b_i}(t-1) + c(t-1)\frac{\partial f(t)}{ \partial b_i} + \frac{\partial}{\partial b_i}  i(t) g(t)   && \textit{Product rule}\\
+&= f(t) TC_{b_i}(t-1) + c(t-1)\frac{\partial f(t)}{ \partial b_i} + i(t)\frac{\partial g(t) }{\partial b_i}  + g(t)\frac{\partial i(t) }{\partial b_i}  && \textit{Product rule} 
+% %   & = (1-z^k(t)) T_{w_{z}}^{ijk}(t-1) + z^k(t) \frac{\partial}{\partial W^{ij}_z}\left (  z^k(t)  \hat{h}^k(t) \right )  && \textit{Using definition 5}\\
+% %   & = (1-z^k(t)) T_{w_{z}}^{ijk}(t-1) + z^k(t) \frac{\partial \hat{h}^k(t)}{\partial W^{ij}_z} + \hat{h}^k(t) \frac{\partial z^k(t)}{\partial W^{ij}_z}  && \textit{test} \textit{Applying chain rule}
+\end{align*}
+% \end{equation}
+Where gadient of  $g(t)$  w.r.t $b_i$ is:
+\begin{align*}
+\frac{\partial g(t)}{\partial b_i} &=  \frac{\partial}{\partial b_i} \phi(W_{g}^T x(t) + u_{g} h(t-1) + b_g) && \textit{From equation \ref{g}} \\
+&= (1-\phi^2(y))u_g TH_{b_i}(t-1) && \textit{Where $y$ equal $W_{g}^T x(t) + u_{g} h(t-1) + b_g$} \\
+\end{align*}
+
+, gradient of $f(t)$  w.r.t $b_i$ is:
+% \begin{equation}
+\begin{align*}
+\frac{\partial f(t)}{\partial b_i} &=  \frac{\partial}{\partial b_i} \sigma(W_{f}^T x(t) + u_{f} h(t-1) + b_f) && \textit{From equation \ref{f}} \\
+&= \sigma(y)(1-\sigma(y))u_f TH_{b_i}(t-1) && \textit{Where $y$ equal $W_{f}^T x(t) + u_{f} h(t-1) + b_f$} \\
+\end{align*}
+% \end{equation}
+
+and gradient of $i(t)$  w.r.t $b_i$ is:
+% \begin{equation}
+\begin{align*}
+\frac{\partial i(t)}{\partial b_i} &=  \frac{\partial}{\partial b_i} \sigma(W_{i}^T x(t) + u_i h(t-1) + b_i) && \textit{From equation \ref{i}} \\
+&= \sigma(y)(1-\sigma(y)) \left (u_i TH_{b_i}(t-1) + 1 \right )&& \textit{Where $y$ equal $W_{i}^T x(t) + b_i h(t-1) + b_i$} \\
+\end{align*}
+% \end{equation}
+
+
+\subsection{$\frac{\partial h(t)}{\partial W_{f_j}}$}
+The derivations for the remaining parameters is analogous to what previous derivations. The final equations are as follows.
+\begin{equation}
+\begin{aligned}
+\frac{\partial g(t)}{\partial W_{f_j}} &=  (1-\phi^2(y))(u_g TH_{W_{f_j}}(t-1))  \\
+\frac{\partial f(t)}{\partial W_{f_j}} &=  \sigma(y)(1-\sigma(y))( x_j + u_f TH_{W_{f_j}}(t-1)) \\
+\frac{\partial i(t)}{\partial W_{f_j}}  &= \sigma(y)(1-\sigma(y))( u_i TH_{W_{f_j}}(t-1))  \\
+\frac{\partial o(t)}{\partial W_{f_j}} &=  \sigma(y)(1-\sigma(y))( u_o TH_{W_{f_j}}(t-1))  \\
+TC_{W_{f_j}}&= f(t) TC_{f_j}(t-1) + c(t-1)\frac{\partial f(t)}{ \partial b_i} + i(t)\frac{\partial g(t) }{\partial b_i}  + g(t)\frac{\partial i(t) }{\partial b_i}  \\
+TH_{W_{f_j}}&= o(t) (1-\phi^{2}(c(t))) TC_{W_{f_j}}(t)  + \phi(c(t)) \frac{\partial o(t)}{\partial W_{ij}}  
+\end{aligned}
+\end{equation}
+
+
+\subsection{$\frac{\partial h(t)}{\partial W_{o_j}}$}
+
+\begin{equation}
+\begin{aligned}
+\frac{\partial g(t)}{\partial W_{o_j}} &=  (1-\phi^2(y))(u_g TH_{W_{o_j}}(t-1))  \\
+\frac{\partial f(t)}{\partial W_{o_j}} &=  \sigma(y)(1-\sigma(y))( u_f TH_{W_{o_j}}(t-1)) \\
+\frac{\partial i(t)}{\partial W_{o_j}}  &= \sigma(y)(1-\sigma(y)) u_i TH_{W_{o_j}}(t-1)  \\
+\frac{\partial o(t)}{\partial W_{o_j}} &=  \sigma(x)(1-\sigma(x))(x_j + u_o TH_{W_{o_j}}(t-1))  \\
+TC_{W_{o_j}}&= f(t) TC_{o_j}(t-1) + c(t-1)\frac{\partial f(t)}{ \partial b_i} + i(t)\frac{\partial g(t) }{\partial b_i}  + g(t)\frac{\partial i(t) }{\partial b_i}  \\
+TH_{W_{o_j}}&= o(t) (1-\phi^{2}(c(t))) TC_{W_{o_j}}(t)  + \phi(c(t)) \frac{\partial o(t)}{\partial W_{ij}}  
+\end{aligned}
+\end{equation}
+
+
+\subsection{$\frac{\partial h(t)}{\partial W_{g_j}}$}
+
+\begin{equation}
+\begin{aligned}
+\frac{\partial g(t)}{\partial W_{g_j}} &=  (1-\phi^2(y))(x_j + u_g TH_{W_{g_j}}(t-1))  \\
+\frac{\partial f(t)}{\partial W_{g_j}} &=  \sigma(y)(1-\sigma(y))( u_f TH_{W_{g_j}}(t-1)) \\
+\frac{\partial i(t)}{\partial W_{g_j}}  &= \sigma(y)(1-\sigma(y))(u_i TH_{W_{g_j}}(t-1))  \\
+\frac{\partial o(t)}{\partial W_{g_j}} &=  \sigma(x)(1-\sigma(x))( u_o TH_{W_{g_j}}(t-1))  \\
+TC_{W_{g_j}}&= f(t) TC_{g_j}(t-1) + c(t-1)\frac{\partial f(t)}{ \partial b_i} + i(t)\frac{\partial g(t) }{\partial b_i}  + g(t)\frac{\partial i(t) }{\partial b_i}  \\
+TH_{W_{g_j}}&= o(t) (1-\phi^{2}(c(t))) TC_{W_{g_j}}(t)  + \phi(c(t)) \frac{\partial o(t)}{\partial W_{ij}}  
+\end{aligned}
+\end{equation}
+
+% \subsection{$\frac{\partial h(t)}{\partial W_{i_j}}$}
+
+% \begin{equation}
+%     \begin{aligned}
+%       \frac{\partial g(t)}{\partial W_{i_j}} &=  \sigma(y)(1-\sigma(y))(u_g TH_{W_{i_j}}(t-1))  \\
+%       \frac{\partial f(t)}{\partial W_{i_j}} &=  \sigma(y)(1-\sigma(y))( u_f TH_{W_{i_j}}(t-1)) \\
+%       \frac{\partial i(t)}{\partial W_{i_j}}  &= \sigma(y)(1-\sigma(y))(x_j + u_i TH_{W_{i_j}}(t-1))  \\
+%         \frac{\partial o(t)}{\partial W_{i_j}} &=  \sigma(x)(1-\sigma(x))( u_o TH_{W_{i_j}}(t-1))  \\
+%       TC_{W_{i_j}}&= f(t) TC_{i_j}(t-1) + c(t-1)\frac{\partial f(t)}{ \partial b_i} + i(t)\frac{\partial g(t) }{\partial b_i}  + g(t)\frac{\partial i(t) }{\partial b_i}  \\
+%       TH_{W_{i_j}}&= o(t) (1-\phi^{2}(c(t))) TC_{W_{i_j}}(t)  + \phi(c(t)) \frac{\partial o(t)}{\partial W_{ij}}  
+%     \end{aligned}
+% \end{equation}
+
+
+
+
+
+% \subsection{$\frac{\partial h(t)}{\partial u_{i}}$}
+
+% \begin{equation}
+%     \begin{aligned}
+%       \frac{\partial g(t)}{\partial u_{i}} &=  \sigma(y)(1-\sigma(y))(u_g TH_{u_{i}}(t-1))  \\
+%       \frac{\partial f(t)}{\partial u_{i}} &=  \sigma(y)(1-\sigma(y))( u_f TH_{u_{i}}(t-1)) \\
+%       \frac{\partial i(t)}{\partial u_{i}}  &= \sigma(y)(1-\sigma(y))(u_i TH_{u_{i}}(t-1) + h(t-1))  \\
+%         \frac{\partial o(t)}{\partial u_{i}} &=  \sigma(x)(1-\sigma(x))( u_o TH_{u_{i}}(t-1))  \\
+%       TC_{u_{i}}&= f(t) TC_{i_j}(t-1) + c(t-1)\frac{\partial f(t)}{ \partial b_i} + i(t)\frac{\partial g(t) }{\partial b_i}  + g(t)\frac{\partial i(t) }{\partial b_i}  \\
+%       TH_{u_{i}}&= o(t) (1-\phi^{2}(c(t))) TC_{u_{i}}(t)  + \phi(c(t)) \frac{\partial o(t)}{\partial W_{ij}}  
+%     \end{aligned}
+% \end{equation}
+
+
+\subsection{$\frac{\partial h(t)}{\partial u_{o}}$}
+
+\begin{equation}
+\begin{aligned}
+\frac{\partial g(t)}{\partial u_{o}} &=  (1-\phi^2(y))(u_g TH_{u_{o}}(t-1))  \\
+\frac{\partial f(t)}{\partial u_{o}} &=  \sigma(y)(1-\sigma(y))( u_f TH_{u_{o}}(t-1)) \\
+\frac{\partial i(t)}{\partial u_{o}}  &= \sigma(y)(1-\sigma(y))(u_i TH_{u_{o}}(t-1))  \\
+\frac{\partial o(t)}{\partial u_{o}} &=  \sigma(x)(1-\sigma(x))( u_o TH_{u_{o}}(t-1) + h(t-1))  \\
+TC_{u_{o}}&= f(t) TC_{i_j}(t-1) + c(t-1)\frac{\partial f(t)}{ \partial b_i} + i(t)\frac{\partial g(t) }{\partial b_i}  + g(t)\frac{\partial i(t) }{\partial b_i}  \\
+TH_{u_{o}}&= o(t) (1-\phi^{2}(c(t))) TC_{u_{o}}(t)  + \phi(c(t)) \frac{\partial o(t)}{\partial W_{ij}}  
+\end{aligned}
+\end{equation}
+
+\subsection{$\frac{\partial h(t)}{\partial u_{f}}$}
+
+\begin{equation}
+\begin{aligned}
+\frac{\partial g(t)}{\partial u_{f}} &=  
+(1-\phi^2(y))(u_g TH_{u_{f}}(t-1))  \\
+\frac{\partial f(t)}{\partial u_{f}} &=  \sigma(y)(1-\sigma(y))( u_f TH_{u_{f}}(t-1) + h(t-1)) \\
+\frac{\partial i(t)}{\partial u_{f}}  &= \sigma(y)(1-\sigma(y))(u_i TH_{u_{f}}(t-1))  \\
+\frac{\partial o(t)}{\partial u_{f}} &=  \sigma(x)(1-\sigma(x))( u_o TH_{u_{f}}(t-1))  \\
+TC_{u_{f}}&= f(t) TC_{i_j}(t-1) + c(t-1)\frac{\partial f(t)}{ \partial b_i} + i(t)\frac{\partial g(t) }{\partial b_i}  + g(t)\frac{\partial i(t) }{\partial b_i}  \\
+TH_{u_{f}}&= o(t) (1-\phi^{2}(c(t))) TC_{u_{f}}(t)  + \phi(c(t)) \frac{\partial o(t)}{\partial W_{ij}}  
+\end{aligned}
+\end{equation}
+
+\subsection{$\frac{\partial h(t)}{\partial u_{g}}$}
+
+\begin{equation}
+\begin{aligned}
+\frac{\partial g(t)}{\partial u_{g}} &=  
+(1-\phi^2(y))(u_g TH_{u_{g}}(t-1)+ h(t-1))  \\
+\frac{\partial f(t)}{\partial u_{g}} &=  \sigma(y)(1-\sigma(y))( u_f TH_{u_{g}}(t-1)) \\
+\frac{\partial i(t)}{\partial u_{g}}  &= \sigma(y)(1-\sigma(y))( u_i TH_{u_{g}}(t-1))  \\
+\frac{\partial o(t)}{\partial u_{g}} &=  \sigma(x)(1-\sigma(x))( u_o TH_{u_{g}}(t-1))  \\
+TC_{u_{g}}&= f(t) TC_{i_j}(t-1) + c(t-1)\frac{\partial f(t)}{ \partial b_i} + i(t)\frac{\partial g(t) }{\partial b_i}  + g(t)\frac{\partial i(t) }{\partial b_i}  \\
+TH_{u_{g}}&= o(t) (1-\phi^{2}(c(t))) TC_{u_{g}}(t)  + \phi(c(t)) \frac{\partial o(t)}{\partial W_{ij}}  
+\end{aligned}
+\end{equation}
+
+
+\subsection{$\frac{\partial h(t)}{\partial b_{g}}$}
+
+\begin{equation}
+\begin{aligned}
+\frac{\partial g(t)}{\partial b_{g}} &=  
+(1-\phi^2(y))(u_g TH_{b_{g}}(t-1)+ 1)  \\
+\frac{\partial f(t)}{\partial b_{g}} &=  \sigma(y)(1-\sigma(y))( u_f TH_{b_{g}}(t-1)) \\
+\frac{\partial i(t)}{\partial b_{g}}  &= \sigma(y)(1-\sigma(y))(u_i TH_{b_{g}}(t-1))  \\
+\frac{\partial o(t)}{\partial b_{g}} &=  \sigma(x)(1-\sigma(x))( u_o TH_{b_{g}}(t-1))  \\
+TC_{b_{g}}&= f(t) TC_{i_j}(t-1) + c(t-1)\frac{\partial f(t)}{ \partial b_i} + i(t)\frac{\partial g(t) }{\partial b_i}  + g(t)\frac{\partial i(t) }{\partial b_i}  \\
+TH_{b_{g}}&= o(t) (1-\phi^{2}(c(t))) TC_{b_{g}}(t)  + \phi(c(t)) \frac{\partial o(t)}{\partial W_{ij}}  
+\end{aligned}
+\end{equation}
+
+\subsection{$\frac{\partial h(t)}{\partial b_{f}}$}
+
+\begin{equation}
+\begin{aligned}
+\frac{\partial g(t)}{\partial b_{f}} &=  
+(1-\phi^2(y))(u_g TH_{b_{f}}(t-1))  \\
+\frac{\partial f(t)}{\partial b_{f}} &=  \sigma(y)(1-\sigma(y))( u_f TH_{b_{f}}(t-1) + 1 ) \\
+\frac{\partial i(t)}{\partial b_{f}}  &= \sigma(y)(1-\sigma(y))( u_i TH_{b_{f}}(t-1))  \\
+\frac{\partial o(t)}{\partial b_{f}} &=  \sigma(x)(1-\sigma(x))( u_o TH_{b_{f}}(t-1))  \\
+TC_{b_{f}}&= f(t) TC_{i_j}(t-1) + c(t-1)\frac{\partial f(t)}{ \partial b_i} + i(t)\frac{\partial g(t) }{\partial b_i}  + g(t)\frac{\partial i(t) }{\partial b_i}  \\
+TH_{b_{f}}&= o(t) (1-\phi^{2}(c(t))) TC_{b_{f}}(t)  + \phi(c(t)) \frac{\partial o(t)}{\partial W_{ij}}  
+\end{aligned}
+\end{equation}
+
+\subsection{$\frac{\partial h(t)}{\partial b_{o}}$}
+
+\begin{equation}
+\begin{aligned}
+\frac{\partial g(t)}{\partial b_{o}} &=  
+(1-\phi^2(y))(u_g TH_{b_{o}}(t-1))  \\
+\frac{\partial f(t)}{\partial b_{o}} &=  \sigma(y)(1-\sigma(y))( u_f TH_{b_{o}}(t-1)) \\
+\frac{\partial i(t)}{\partial b_{o}}  &= \sigma(y)(1-\sigma(y))( u_i TH_{b_{o}}(t-1))  \\
+\frac{\partial o(t)}{\partial b_{o}} &=  \sigma(x)(1-\sigma(x))( u_o TH_{b_{o}}(t-1) + 1 )  \\
+TC_{b_{o}}&= f(t) TC_{i_j}(t-1) + c(t-1)\frac{\partial f(t)}{ \partial b_i} + i(t)\frac{\partial g(t) }{\partial b_i}  + g(t)\frac{\partial i(t) }{\partial b_i}  \\
+TH_{b_{o}}&= o(t) (1-\phi^{2}(c(t))) TC_{b_{o}}(t)  + \phi(c(t)) \frac{\partial o(t)}{\partial W_{ij}}  
+\end{aligned}
+\end{equation}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \end{document}
