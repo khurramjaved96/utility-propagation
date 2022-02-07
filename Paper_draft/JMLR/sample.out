@@ -1,0 +1,14 @@
+\BOOKMARK [1][-]{section.1}{Introduction}{}% 1
+\BOOKMARK [1][-]{appendix.A}{Forward-mode gradient computation of an LSTM cell }{}% 2
+\BOOKMARK [2][-]{subsection.A.1}{h\(t\)Wi}{appendix.A}% 3
+\BOOKMARK [2][-]{subsection.A.2}{h\(t\)ui}{appendix.A}% 4
+\BOOKMARK [2][-]{subsection.A.3}{h\(t\)bi}{appendix.A}% 5
+\BOOKMARK [2][-]{subsection.A.4}{h\(t\)Wfj}{appendix.A}% 6
+\BOOKMARK [2][-]{subsection.A.5}{h\(t\)Woj}{appendix.A}% 7
+\BOOKMARK [2][-]{subsection.A.6}{h\(t\)Wgj}{appendix.A}% 8
+\BOOKMARK [2][-]{subsection.A.7}{h\(t\)uo}{appendix.A}% 9
+\BOOKMARK [2][-]{subsection.A.8}{h\(t\)uf}{appendix.A}% 10
+\BOOKMARK [2][-]{subsection.A.9}{h\(t\)ug}{appendix.A}% 11
+\BOOKMARK [2][-]{subsection.A.10}{h\(t\)bg}{appendix.A}% 12
+\BOOKMARK [2][-]{subsection.A.11}{h\(t\)bf}{appendix.A}% 13
+\BOOKMARK [2][-]{subsection.A.12}{h\(t\)bo}{appendix.A}% 14
