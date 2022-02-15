@@ -45,6 +45,37 @@
 \newcommand{\algoname}{\text{Master-User}}
 \newcommand{\archi}{\text{Col-NN}}
 
+
+\def\a{\alpha}
+\def\b{\beta}
+\def\g{\gamma}
+\def\d{\delta}
+\def\dd{\mbox{d}}
+\def\ve{\varepsilon}
+\def\e{\epsilon}
+\def\n{{\bf n}}
+\def\r{\rho}
+\def\t{\theta}
+\def\q{{\bf q}}
+\def\k{{\bf k}}
+\def\x{{\bf x}}
+\def\y{{\bf y}}
+\def\l{\ell}
+\def\o{\omega}
+\def\p{{\bf p}}
+\def\s{\sigma}
+\def\vp{\varphi}
+\def\D{\Delta}
+\def\E{{\bf E}}
+\def\K{{\bf K}}
+\def\L{{\bf L}}
+\def\Pt{\tilde{P}}
+\def\R{{\bf R}}
+\def\S{{\bf S}}
+\def\U{{\bf U}}
+\def\W{{\bf W}}
+
+
 \begin{document}
 
 \title{Unbiased Scalable Online Recurrent Learning}
@@ -79,7 +110,7 @@ State construction using RNNs requires structural credit assignment---identifyin
 
 BPTT and RTRL are not suitable for online state construciton for large problems. BPTT requires storing all past activations for estimating the gradient. Additionally, it requires computation proportional to the length of the sequence seen so far. This makes BPTT unsuitable for online learning on long or never-ending streams of data. RTRL can estimate the gradient on the go, and does not require more computation as the length of the sequence grows. However, RTRL scales pooly with an increase in number of parameters of the RNN. Both BPTT and RTRL can be approximated, to make them more suitable for online learning. 
 
-Existing approximations to gradient-based learning approximate the estimate of the gradient, but keep the function class of the network the same. The approximations either introduce bias, which can result in poor performance or even divergence, or increase the variance of the estimate, making learning extremely slow. In this work, we propose a different strategy; instead of introducing bias in the estimate of the gradient, or increase the variance of the estimate, we instead limit the function class of the RNNs in a way that allows us to compute unbiased low-variance gradient estimate in a scalable way. Limiting the function class also introduces bias, however since learning is still done using the correct gradient, our method is less susceptible to instablity in learning. 
+Existing approximations to gradient-based learning approximate the estimate of the gradient, but keep the function class of the network the same. These approximations either introduce bias, which can result in poor performance or even divergence, or increase the variance of the estimate, making learning extremely slow. In this work, we propose a different strategy; instead of introducing bias in the estimate of the gradient, or increase the variance of the estimate, we instead limit the function class of the RNNs in a way that allows us to compute unbiased low-variance gradient estimate in a scalable way. Limiting the function class also introduces bias, however since learning is still done using the correct gradient, our method is less susceptible to instablity in learning. 
 
 
 
@@ -157,7 +188,7 @@ which requires  $O(|h|^2|\theta|)$ operations and scales poorly to large network
 
 
 
-A promising direction to scale gradient-based credit-assignment to large networks is to approximate the gradient. Elman~(1990) proposed to ignore the influence of parameters on future predictions completely for training RNNs. This resulted in a scalable but biased algorithm. Williams and Peng~(1990) proposed a more general algorithm called Truncated BPTT (T-BPTT). T-BPTT tracks the influence of all parameters on predictions made up to $k$ steps in the future. T-BPTT limits the BPTT computation to last $k$ activation, and works well for a range of problems~(Mikolov~\etal, 2009, 2010; Sutskever, 2013 and Kapturowski~\etal, 2018). Its main limitation is that the resultant gradient is blind to long-range dependencies. Mujika~\etal~(2018) showed that on a simple copy task, T-BPTT failed to learn dependencies beyond the truncation window. Tallec~\etal~(2017) demonstrated T-BPTT can even diverge when a parameter has a negative long-term effect on a target and a positive short-term effect. 
+A promising direction to scale gradient-based credit-assignment to large networks is to approximate the gradient. Elman~(1990) proposed to ignore the influence of parameters on future predictions completely for training RNNs. This resulted in a scalable but biased algorithm. Williams and Peng~(1990) proposed a more general algorithm called Truncated BPTT (T-BPTT). T-BPTT tracks the influence of all parameters on predictions made up to $k$ steps in the future. T-BPTT limits the BPTT computation to last $k$ steps, and works well for a range of problems~(Mikolov~\etal, 2009, 2010; Sutskever, 2013 and Kapturowski~\etal, 2018). Its main limitation is that the resultant gradient is blind to long-range dependencies. Mujika~\etal~(2018) showed that on a simple copy task, T-BPTT failed to learn dependencies beyond the truncation window. Tallec~\etal~(2017) demonstrated T-BPTT can even diverge when a parameter has a negative long-term effect on a target and a positive short-term effect. 
 
 \begin{figure*}
 	\centering
@@ -188,6 +219,12 @@ For truncated backprop, we use a simple recurrent network with one hidden unit, 
 We propose imposing a specific structure on either the connections of the recurrent network, or the learning algorithms, to achieve scalable learning without truncation. We propose columnar networks to ac
 
 \section{Empirical evaluation} 
+
+\begin{figure*}
+	\centering
+	\includegraphics[width=0.75\textwidth]{figures/plt_animal.eps}
+	\caption{TODO: T-BPTT is only 15 runs while the remaining curves are 30 runs. }
+\end{figure*}
 We first evaluate the performance of the proposed methods, and baselines, on a set of 
 \section{Temporally symmetric hierarchical recurrent learning using generate and test}  
 The primary limitation of the constructive and hybrid approaches is that they are not suitable for continual learning. Once a feature is frozen, it never changes, even if the environment does. In the constructive case, the agent can, at best, continually update one recurrent feature. In the hybrid case, the agent can update $k$ recurrent units added last. Inability to update all features after a certain number of time steps  make the agent lose the ability to  modify its feature representation. In a sense, the agent becomes a linear learner. 
