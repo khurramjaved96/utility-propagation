@@ -22,6 +22,8 @@
 \usepackage{jmlr2e}
 \usepackage{booktabs} % for professional tables
 \usepackage{amsmath,amsfonts,amssymb,mathtools}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
 
 % Definitions of handy macros can go here
 
@@ -34,7 +36,7 @@
 
 % Short headings should be running head and authors last names
 
-\ShortHeadings{Online Scalable RNNs}{Meil\u{a} and Jordan}
+\ShortHeadings{Online Scalable RNNs}{Javed, Shah, Sutton, and White}
 \firstpageno{1}
 
 \newcommand{\etal}{\textit{et al}.}
@@ -45,8 +47,9 @@
 
 \begin{document}
 
-\title{Two Constraints for Scalable Online Recurrent Learning}
-
+\title{Unbiased Scalable Online Recurrent Learning}
+%\title{Recurrent Neural Network Architectures \\ for Scalable Online Learning }
+%\title{Scalable Online Recurrent Learning }
 %\author{\name Marina Meil\u{a} \email mmp@stat.washington.edu \\
      %  \addr Department of Statistics\\
      %  University of Washington\\
@@ -62,7 +65,7 @@
 \maketitle
 
 \begin{abstract}%   <- trailing '%' for backward compatibility of .sty file
-Online scalable recurrent learning is challenging. Two popular gradient-based methods for recurrent learning are BPTT, and RTRL. BPTT looks at complete sequence before computing gradients, and is unsuitable for online updates. RTRL can do online updates, but scales poorly with the number of parameters. In this paper, we propose two constraints that make RTRL scalable. We show that by either decomposing the network into independent modules, or learning a recurrent network incrementally, we can make RTRL scale linearly with the number of parameters. Both approaches result in different algorithms, that can be combined. We show the strengths and weaknesses of the proposed algorithms on online prediction learning benchmarks. 
+Online scalable recurrent learning is challenging. Two popular gradient-based methods for recurrent learning are BPTT, and RTRL. BPTT looks at the complete sequence before computing gradients, and is unsuitable for online updates. RTRL can do online updates, but generally scales poorly with an increase in the number of parameters. In this paper, we propose two constraints that make RTRL scalable. We show that by either decomposing the network into independent modules, or learning a recurrent network incrementally and selectively, we can make RTRL scale linearly with the number of parameters without introducing bias, or increasing the variance of the gradient estimates. The two approaches result in different algorithms, that can be combined. We show the strengths and weaknesses of the proposed algorithms on two online prediction problems. 
 \end{abstract}
 
 \begin{keywords}
@@ -70,19 +73,83 @@ Online scalable recurrent learning is challenging. Two popular gradient-based me
 \end{keywords}
 
 \section{Introduction}
+Learning by interacting with the world is a powerful framework for building systems that can autonomously achieve goals in complex worlds. A key ingredient for building autonomous systems is agent-state construction---learning a compact representation of the history of interactions that helps in predicting and controlling the future. One solution for state construction is to use differentiable recurrent neural networks (RNNs). 
 
-Structural credit-assignment --- identifying how to change network parameters to improve predictions --- is an essential component of learning in neural networks. Effective structural credit-assignment requires tracking the influence of parameters on future predictions. In recurrent networks, a parameter can influence the internal state of the network which, in turn, can affect a prediction made many steps in the future.
+State construction using RNNs requires structural credit assignment---identifying how to change network parameters to improve predictions. In RNNs, a parameter can influence  a prediction made many steps in the future. As a result, effective credit assignment requires tracking the influence of parameters on future predictions. Two popular algorithms for gradient-based structural credit assignment in recurrent neural networks are Back-propagation through time (BPTT)~(Werbos, 1988; Robinson and Fallside, 1987)  and real-time recurrent learning (RTRL)~(Williams and Zipser~1989). 
 
-Back-Propagation Through Time (BPTT)~(Werbos, 1988; Robinson and Fallside, 1987) is a popular algorithm for gradient-based structural credit-assignment in RNNs. BPTT extends the back-propagation algorithm for feed-forward networks --- independently proposed by Werbos~(1974) and Rumelhart~\etal~(1986) --- to RNNs by storing network activations from prior steps, and repeatedly applying the chain-rule starting from the output of the network and ending at the activations at the beginning of the sequence. BPTT is unsuitable for online learning as it requires memory proportional to the length of the sequence. Moreover, it delays gradient computation until the end of the sequence. For online learning, this sequence can be never-ending or arbitrarily long. 
+BPTT and RTRL are not suitable for online state construciton for large problems. BPTT requires storing all past activations for estimating the gradient. Additionally, it requires computation proportional to the length of the sequence seen so far. This makes BPTT unsuitable for online learning on long or never-ending streams of data. RTRL can estimate the gradient on the go, and does not require more computation as the length of the sequence grows. However, RTRL scales pooly with an increase in number of parameters of the RNN. Both BPTT and RTRL can be approximated, to make them more suitable for online learning. 
+
+Existing approximations to gradient-based learning approximate the estimate of the gradient, but keep the function class of the network the same. The approximations either introduce bias, which can result in poor performance or even divergence, or increase the variance of the estimate, making learning extremely slow. In this work, we propose a different strategy; instead of introducing bias in the estimate of the gradient, or increase the variance of the estimate, we instead limit the function class of the RNNs in a way that allows us to compute unbiased low-variance gradient estimate in a scalable way. Limiting the function class also introduces bias, however since learning is still done using the correct gradient, our method is less susceptible to instablity in learning. 
 
 
+
+
+\section{Background}
+\subsection{Recurrent learning} 
+\begin{equation}
+y(t) = \sum_{k=0}^{d} h_k(t)w_k(t)
+\end{equation}
+where 
+\begin{equation}
+h(t) = f_{\theta(t)}\left(h(t-1), x(t)\right)
+\end{equation}
+here $\theta(t)$ are the parameters of the RNN at time $t$, whereas $f_\theta$ is a function that represents the RNN. Given this notation, we can write the gradient of a prediction $y(t)$ w.r.t the parameters $\theta$ as
+\begin{equation}
+\begin{aligned}
+\frac{\partial{y(t)}}{\partial{\theta}} & = \frac{\partial{y(t)}}{\partial{h(t)}}\frac{\partial{h(t)}}{\partial{\theta}}   \\
+\end{aligned}
+\end{equation}
+We can expand the second term as: 
+\begin{equation}
+\frac{\partial{h(t)}}{\partial{\theta}} =  \frac{\partial{h(t)}}{\partial{\theta(t)}} + \frac{\partial{h(t)}}{\partial{h(t-1)}} \frac{\partial{h(t-1)}}{\partial{\theta}}
+\label{expansion}
+\end{equation}
+to get
+\begin{equation}
+\frac{\partial{y(t)}}{\partial{\theta}}  = \frac{\partial{y(t)}}{\partial{h(t)}}\left(\frac{\partial{h(t)}}{\partial{\theta(t)}} + \frac{\partial{h(t)}}{\partial{h(t-1)}} \frac{\partial{h(t-1)}}{\partial{\theta}}  \right) 
+\label{expanded}
+\end{equation}
+Note that we can use equation~\ref{expansion} to recursively expand equation~\ref{expanded}, until we can get rid of $\partial \theta$ term.  
+BPTT estimates the gradient of $y(t)$ by repeatedly using equation~\ref{expansion}. 
+
+BPTT extends the back-propagation algorithm for feed-forward networks---independently proposed by Werbos~(1974) and Rumelhart~\etal~(1986)---to RNNs by storing network activations from prior steps, and repeatedly applying the chain-rule starting from the output of the network and ending at the activations at the beginning of the sequence. More precisely, we can write the gradient of a prediction $y(t)$ w.r.t the parameters $\theta$ as:
+
+where $h(t)$ is the internal state of the network at time $t$. Then, BPTT comput
+BPTT is unsuitable for online learning as it requires memory proportional to the length of the sequence. Moreover, it delays gradient computation until the end of the sequence. For online learning, this sequence can be arbitrarily long or never-ending.
+\begin{algorithm}
+\caption{Back-propagation through time}\label{alg:cap}
+\begin{algorithmic}
+	\Require $x_1, x_2, x_3, x_4, \cdots, x_n$
+	\Require $h_0$
+	\Require $\theta_1$
+	\State $X \gets x$
+	\State $N \gets n$
+	\For{$t$ in $1, 2, 3, \cdots, n$}
+		\State $h_t = f_{\theta_t}(h_{t-1}, x_t)$
+	\EndFor
+	\State $y_t = \sum_{k=0}^{d} w_k h_k^t$
+	\State grad = 0
+	\For{$t$ in $n, n-1, \cdots, 1$}
+	\State 
+	\EndFor
+	 
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+	\caption{Real-time recurrent learning}\label{alg:cap}
+	\begin{algorithmic}
+		\Require $n \geq 0$
+	\end{algorithmic}
+\end{algorithm}
 
 
 
 % The dependence of BPTT on storing activations from past hinders its application to online learning. Additionally, the computation in BPTT is not spread uniformly across time --- the learner accumulates activations for a sequence in the memory and delays the computation of the gradients until the end. This is incompatible with the goal of real-time learning --- the ability to incorporate feedback from the environment quickly for correcting mistakes. 
 
 
-RTRL---an alternative to BPTT---was proposed by Williams and Zipser~(1989). RTRL relies on forward-mode differentiation---using chain-rule to compute gradients in the direction of time---to compute gradients recursively. Unlike BPTT, RTRL does not delay gradient-computation until the final step. The memory requirement of RTRL also does not depend on the sequence length. As a result, it is a better candidate for real-time online learning. Unfortunately, RTRL requires maintaining the Jacobian $\frac{\partial h(t)}{\partial \theta}$ at every step, which requires $O(|h||\theta|)$ memory, where $|h|$ is the size of state of the network and $|\theta|$ is the number of total parameters. The Jacobian is recursively updated by applying chain rule as:  
+RTRL---an alternative to BPTT---was proposed by Williams and Zipser~(1989). RTRL relies on forward-mode differentiation---using chain-rule to compute gradients in the direction of time---to compute gradients recursively. Unlike BPTT, RTRL does not delay gradient-computation until the final step. The memory requirement of RTRL also does not depend on the sequence length. As a result, it is more suitable for real-time online learning. Unfortunately, RTRL requires maintaining the Jacobian $\frac{\partial h(t)}{\partial \theta}$ at every step, which requires $O(|h||\theta|)$ memory, where $|h|$ is the size of state of the network and $|\theta|$ is the number of total parameters. The Jacobian is recursively updated by applying chain rule as:  
 $$\frac{\partial h(t+1)}{\partial \theta} =\frac{\partial h(t+1)}{\partial \theta(t+1)} +  \frac{\partial h(t+1)}{\partial h(t)}\frac{\partial h(t)}{\partial \theta}, $$ 
 which requires  $O(|h|^2|\theta|)$ operations and scales poorly to large networks.
 
@@ -94,19 +161,49 @@ A promising direction to scale gradient-based credit-assignment to large network
 
 \begin{figure*}
 	\centering
-	\includegraphics[width=0.8\textwidth]{figures/three_types}
+	\includegraphics[width=0.95\textwidth]{figures/three_types}
 	\caption{TODO: Make the caption concise. Three structures of recurrent neural networks that can be trained without truncation. Recurent networks with a columnar structure can be trained end-to-end using gradients without any truncation, only requiring $O(n)$ operations and memory per step. However, columnar networks do not have hierarchical recurrent features---recurrent features made out of other recurrent features. Constructive networks have hierarchical recurrent features, however must be trained incrementally to prevent bias. Incremental learning is achieved by initializing all $w_i$ to zero, and learning $h_1$, $h_2$, and $h_3$ in order. Finally, columnar and constructive networks can be combined to get a hybrid network. The pairs $(h_1, h_2)$ and $(h_3, h_4)$ do not depend on each other, and can learn in parallel. Hoever, $(h_3, h_4)$ must be learned after $(h_1, h_2)$ have been learned and fixed.}
 \end{figure*}
 
-RTRL can also be approximated to reduce its computational overhead. Ollivier~\etal~(2015) and Tallec~\etal~(2017) proposed NoBacktrack and UORO. Both of these algorithms provide stochastic unbiased estimates of the gradient and scale well. However, their estimates have high variance and require extremely small step sizes for effective learning. Cooijmans and Martens~(2019) and Menick~\etal~(2021) showed that, for practical problems, UORO does not perform well due to its high variance compared to other biased approximations. Menick~\etal~(2021) proposed an approximation to RTRL called SnAp-$k$. SnAp-$k$ tracks the influence of a parameter on a state only if the parameter can influence the state within $k$ steps. It first identifies parameters whose influence on a state is zero for $k$ steps and then assumes the future influence to be zero as well. For the remaining parameters, it tracks their influence on all future predictions. The bias introduced by SnAp-k is fundamentally different than the bias introduced by T-BPTT. SnAp-1 can be computationally efficient but introduces significant bias. SnAp-$k$ for $k>1$ reduces bias but can be as expensive as RTRL for dense RNNs.  Menick~\etal~(2021) further proposed using sparse connections as a way to make SnAp more scalable. Connection sparsity reduces the number of parameters that can influence a state within $k$ steps
+RTRL can also be approximated to reduce its computational overhead. Ollivier~\etal~(2015) and Tallec~\etal~(2017) proposed NoBacktrack and UORO. Both of these algorithms provide stochastic unbiased estimates of the gradient and scale well. However, their estimates have high variance and require extremely small step sizes for effective learning. Cooijmans, Martens~(2019) and Menick~\etal~(2021) showed that, for practical problems, UORO does not perform well compared to other biased approximations due to the high variance in its gradient estimates . Menick~\etal~(2021) proposed an approximation to RTRL called SnAp-$k$. SnAp-$k$ tracks the influence of a parameter on a state only if the parameter can influence the state within $k$ steps. It first identifies parameters whose influence on a state is zero for $k$ steps and then assumes the future influence to be zero as well. For the remaining parameters, it tracks their influence on all future predictions. The bias introduced by SnAp-k is fundamentally different than the bias introduced by T-BPTT. SnAp-1 can be computationally efficient but introduces significant bias. SnAp-$k$ for $k>1$ reduces bias but can be as expensive as RTRL for dense RNNs.  Menick~\etal~(2021) further proposed using sparse connections as a way to make SnAp more scalable. Connection sparsity reduces the number of parameters that can influence a state within $k$ steps. 
+
+Among all the approximations, SnAp-1 is the only method that scales linearly with number of parameters, is capable of learning long-term dependencies, and 
+
+\subsection{General value functions and }
+\section{Problem Formulation} 
+We formulate the problem as predicting the discounted some of a cumulant from an online stream of data. More formally, the agent sees a feature vector $x(t)\in \mathcal{R}^d$ at timestep $t$ and predicts the discounted sum of a cumulant $y_t$ given by: 
+\begin{equation}
+\begin{aligned}
+V(S_t) & = \mathbb{E}[G_t | S_t] \\
+& = \mathbb{E}[\sum_{k = 0}^{\infty} \gamma^k y(k)]
+\end{aligned}
+\end{equation}
+Our problem formulation can be used to represent temporal predictions, such as policy evaluation and general value functions. Additionally, by setting $\gamma = 0$, our problem formulation can represent classifcal supervised recurrent learning benchmarks. The goal of the agent is to minimize the mean squared error between the prediction $\hat{V}(x_{1:t})$ and $V(S)$. Note that for all our experiments, the data generation policy $\pi$ is fixed and can be ignored. 
+
+\section{Divergence for truncated-backprop and Snap-1}
+Because truncated backprop and Snap-1 use biased estimates of the gradients for learning updates, they can cause the prediction error and parameters to diverge under pathological cases. We present examples of divergence for both truncated-bptt and SnAp-1. In real-world case, such divergence happens rarely, if ever. However the examples still serve a useful pedagogical role, to clarify the limitation of the two algorithms. 
+
+For truncated backprop, we use a simple recurrent network with one hidden unit, one feature, and one prediction. The recurrence is defined as adding the value of the last hidden state to the current state. We fix the weight for the recurrent connection and the outgoing connection, and learn only the incoming weight. The optimal solution is $w_{in} = -10$. We let the recurrent network learn for a thousand steps using a step size of $10^{-3}$ and show the behavior pf th elearning algorithm in Figure~. Note that the learning 
+\section{Proposed methods} 
+We propose imposing a specific structure on either the connections of the recurrent network, or the learning algorithms, to achieve scalable learning without truncation. We propose columnar networks to ac
+
+\section{Empirical evaluation} 
+We first evaluate the performance of the proposed methods, and baselines, on a set of 
+\section{Temporally symmetric hierarchical recurrent learning using generate and test}  
+The primary limitation of the constructive and hybrid approaches is that they are not suitable for continual learning. Once a feature is frozen, it never changes, even if the environment does. In the constructive case, the agent can, at best, continually update one recurrent feature. In the hybrid case, the agent can update $k$ recurrent units added last. Inability to update all features after a certain number of time steps  make the agent lose the ability to  modify its feature representation. In a sense, the agent becomes a linear learner. 
+
+We can address this limitation by identifying features that are no longer useful, and pruning them. These pruned features can then be replaced with newly constructed features. Similar ideas have been proposed in literature under the term generate and test. 
+
+To effectively combine our method with generate and test, we need to answer two questions---(1) how useless features are identified, and (2) how new features replace them. It is unclear what an ideal algorithm to answer these two questions are. In this work, we limit ourselves to the simple algorithms for both questions. The goal here is to present one temporally symmetric version of the hybrid approach, and not to figure out the best temporally symmetric version. 
+
+To identify useless features, we simply look at how much a feature contributes to its outgoing connection, and use the sum of contribution to all outgoing connections as the utility of the feature. The contribution of a feature to an outgoing connection is defined as the 
+
 %  SnAp, combined with sparsity, is a promising research direction.
 
 %Menick~\etal~(2021) showed that for highly sparse networks, SnAp-$k$ reduces the computational requirement of RTRL by over 95\% while keeping bias in check. One limitation of their work is that they do not provide a scalable method to identify parameters that would not influence a state within $k$ steps. Instead, they run the RNN for $k$ steps and look at the full Jacobian $\frac{\partial h(t)}{\partial \theta}$ to determine these parameters. For large networks, computing this Jacobian even once is not possible. Moreover, because they induce sparsity randomly in their networks, the resultant sparsity in the Jacobian is not structured and is not amenable to efficiency gains using existing hardware. Finally, SnAp does not scale well when used in conjunction with deep feature extractors. If internal states operate on a shared representation computed with a deep network with parameters $\theta$, even SnAp-1 could require $O(|\theta||h|)$ memory and $O(|\theta||h|^2)$ operations per-step. Our goal is to design an algorithm that requires $O(|\theta|)$ memory and operations.
 
 
 
-
-{\noindent \em Remainder omitted in this sample. See http://www.jmlr.org/papers/ for full paper.}
 
 % Acknowledgements should go at the end, before appendices and references
 
