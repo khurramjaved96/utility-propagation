@@ -75,6 +75,15 @@
 \def\U{{\bf U}}
 \def\W{{\bf W}}
 
+\usepackage{todonotes}
+\newcounter{todocounter}
+\newcommand{\ps}[1]
+{\stepcounter{todocounter}
+	\todo[color=green!40,author=Khurram, inline]{\thetodocounter: #1}
+}
+
+\newcommand{\khurram}[1]{\stepcounter{todocounter}
+	{\color{blue!90} Khurram: \thetodocounter: #1}}
 
 \begin{document}
 
@@ -251,7 +260,9 @@ From these experiments, we have shown that despite our methods limiting the clas
 
 TODO: The T-BPTT curve here is not using eligibility traces. Should the size still be adjusted?
 
-TODO: Where are the plots for columnar with 23 total features stored? I should plot those instead maybe.
+TODO: Where are the plots for columnar with 23 total features stored? I should plot those instead maybe.\\
+\khurram{They are in khurram\_constructive\_nomralized\_2. Use the features column to select the size of the network}
+
 
 
 \section{Temporally symmetric hierarchical recurrent learning using generate and test}  
