@@ -235,9 +235,11 @@ We propose imposing a specific structure on either the connections of the recurr
 
 \begin{figure*}[t]
 	\centering
-	\includegraphics[width=0.8\textwidth]{figures/plt_animal.eps}
+	% More versions of the left figure available in the figures folder
+	\includegraphics[width=0.48\textwidth]{figures/plt_animal_preds400_tight_withaxlabel.eps}
+	\includegraphics[width=0.48\textwidth]{figures/plt_animal.eps}
 	\label{animal_results}
-	\caption{ Performance when an LSTM is trained using the proposed and other online baseline methods on the trace patterning benchmark (lower is better). All the runs are averaged using 30 seeds, and the error regions are the 95\% confidence intervals. T-BPTT uses a truncation length k=27. We can see from this plot that the SnAp-1 method performs the worst while the hybrid networks achieve the lowest error. TODO: T-BPTT is only 15 runs while the remaining curves are 30 runs. TODO: Maybe hybrid networks should get a better name so that people can refer to it easily?}
+	\caption{ Left: Comparison of the predictions produced by the different methods for the last 400 timesteps of training. Right: Performance when an LSTM is trained using the proposed and other online baseline methods on the trace patterning benchmark (lower is better). All the runs are averaged using 30 seeds, and the error regions are the 95\% confidence intervals. T-BPTT uses a truncation length k=27. We can see from this plot that the SnAp-1 method performs the worst while the hybrid networks achieve the lowest error. TODO: T-BPTT is only 15 runs while the remaining curves are 30 runs. TODO: Maybe hybrid networks should get a better name so that people can refer to it easily?}
 \end{figure*}
 We first evaluate the performance of the proposed methods and baselines on the trace patterning benchmark described in section \ref{animal_bench}. In these experiments, we set $\text{ISI} = \text{Unif}(14,26)$, $\g = \frac{1}{1-\E[ISI]}$, $n=6$ CSs, $k=10$ activation patterns with a $0.5$ probability of activation and $m=5$ distractor signals. The details of the remaining hyper-parameters and their tuning is given in the Appendix \ref{hyperparams}.
 
