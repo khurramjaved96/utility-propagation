@@ -66,11 +66,11 @@
 \def\s{\sigma}
 \def\vp{\varphi}
 \def\D{\Delta}
-\def\E{{\bf E}}
+\def\E{{\mathbb E}}
 \def\K{{\bf K}}
 \def\L{{\bf L}}
 \def\Pt{\tilde{P}}
-\def\R{{\bf R}}
+\def\R{{\mathbb R}}
 \def\S{{\bf S}}
 \def\U{{\bf U}}
 \def\W{{\bf W}}
@@ -202,14 +202,27 @@ Among all the approximations, SnAp-1 is the only method that scales linearly wit
 
 \subsection{General value functions and }
 \section{Problem Formulation} 
-We formulate the problem as predicting the discounted some of a cumulant from an online stream of data. More formally, the agent sees a feature vector $x(t)\in \mathcal{R}^d$ at timestep $t$ and predicts the discounted sum of a cumulant $y_t$ given by: 
+We formulate the problem as predicting the discounted sum of a cumulant from an online stream of data. More formally, the agent sees a feature vector $x(t)\in \mathcal{R}^d$ at timestep $t$ and predicts the discounted sum of a cumulant $y_t$ given by: 
 \begin{equation}
 \begin{aligned}
 V(S_t) & = \mathbb{E}[G_t | S_t] \\
 & = \mathbb{E}[\sum_{k = 0}^{\infty} \gamma^k y(k)]
+\label{eq:return}
 \end{aligned}
 \end{equation}
-Our problem formulation can be used to represent temporal predictions, such as policy evaluation and general value functions. Additionally, by setting $\gamma = 0$, our problem formulation can represent classifcal supervised recurrent learning benchmarks. The goal of the agent is to minimize the mean squared error between the prediction $\hat{V}(x_{1:t})$ and $V(S)$. Note that for all our experiments, the data generation policy $\pi$ is fixed and can be ignored. 
+This problem formulation can be used to represent temporal predictions, such as policy evaluation and general value functions. Additionally, by setting $\gamma = 0$, our problem formulation can represent classical supervised recurrent learning benchmarks. The goal of the agent is to minimize the mean squared error between the prediction $\hat{V}(x_{1:t})$ and $V(S)$. Note that for all our experiments, the data generation policy $\pi$ is fixed and can be ignored. 
+
+\subsection{Animal Learning Benchmarks}\label{animal_bench}
+A suitable benchmark that fits this problem formulation is the trace patterning benchmark introduced by \cite{Rafiee2020TestbedsFR}. In this benchmark, we are provided with a set of binary stimuli $o_t \in \R^d$ at each timestep t, which includes a set of $n$ Conditioned Stimuli CS$_t $, one Unconditioned Stimuli US$_t$ and $m$ distractor signals. There are $k$ random sets of  configurations of CSs that will activate the US. If the active values of CS$_t$ match one of these activation patterns, the value US$_{t+\text{ISI}}$ will be set to 1, where ISI (\textit{inter-stimulus interval}) is a problem hyperparameter that is uniformly sampled from a certain range after every occurence of the US. In this problem, the goal is to learn eq. \ref{eq:return} using TD error where 
+\begin{equation}
+	y(k) = \text{US}_{t+k+1}
+\end{equation}
+
+This benchmark is suitable for our evaluations since in order to do well, the learned model not only has to learn long-term temporal associations, it also has to identify the correct patterns of CSs that activate the US. Moreover, since this is a continuous online prediction problem, the algorithms need to scale well with time. 
+
+TODO: maybe we should also describe gamma here instead of the empirical evaluation section since it is also a problem parameter
+
+TODO: maybe we should describe the ITI and how the probability of activation works.
 
 \section{Divergence for truncated-backprop and Snap-1}
 Because truncated backprop and Snap-1 use biased estimates of the gradients for learning updates, they can cause the prediction error and parameters to diverge under pathological cases. We present examples of divergence for both truncated-bptt and SnAp-1. In real-world case, such divergence happens rarely, if ever. However the examples still serve a useful pedagogical role, to clarify the limitation of the two algorithms. 
@@ -220,12 +233,27 @@ We propose imposing a specific structure on either the connections of the recurr
 
 \section{Empirical evaluation} 
 
-\begin{figure*}
+\begin{figure*}[t]
 	\centering
-	\includegraphics[width=0.75\textwidth]{figures/plt_animal.eps}
-	\caption{TODO: T-BPTT is only 15 runs while the remaining curves are 30 runs. }
+	\includegraphics[width=0.8\textwidth]{figures/plt_animal.eps}
+	\label{animal_results}
+	\caption{ Performance when an LSTM is trained using the proposed and other online baseline methods on the trace patterning benchmark (lower is better). All the runs are averaged using 30 seeds, and the error regions are the 95\% confidence intervals. T-BPTT uses a truncation length k=27. We can see from this plot that the SnAp-1 method performs the worst while the hybrid networks achieve the lowest error. TODO: T-BPTT is only 15 runs while the remaining curves are 30 runs. TODO: Maybe hybrid networks should get a better name so that people can refer to it easily?}
 \end{figure*}
-We first evaluate the performance of the proposed methods, and baselines, on a set of 
+We first evaluate the performance of the proposed methods and baselines on the trace patterning benchmark described in section \ref{animal_bench}. In these experiments, we set $\text{ISI} = \text{Unif}(14,26)$, $\g = \frac{1}{1-\E[ISI]}$, $n=6$ CSs, $k=10$ activation patterns with a $0.5$ probability of activation and $m=5$ distractor signals. The details of the remaining hyper-parameters and their tuning is given in the Appendix \ref{hyperparams}.
+
+All of these methods are used to train a network with a single LSTM hidden layer, followed by a single output unit which predicts $y(k)$. The number of hidden recurrent units are adjusted for each method in order to ensure a fair comparison. This adjustment is done in order to ensure that the amount of computational resources consumed per step is the same for all the methods. A consequence of this constraint is that in the case of T-BPTT, we have to use a relatively smaller network since we need multiple passes to calculate the intermediate gradients for the computation of the eligibility traces. Despite this, we have found from our experiments that there is no significant difference in the performance of T-BPTT as compared to using a larger hidden state than we are using.
+
+For the T-BPTT experiments, we used a truncation length of k=27 and a hidden size of  18.  This truncation length essentially makes the T-BPTT equivalent to BPTT since $k>\text{max(ISI)}$. The columnar network has 108 independent recurrent units in the hidden layer. The constructive networks begin with a single recurrent feature in the hidden layer and add a new feature every 400,000 steps. By the end of the training, this network ends up with a total of 23 recurrent features. The hybrid approach begins with 20 recurrent features in the hidden layer, and adds 20 features every 800,000 steps, until it reaches a maximum of 108 features. TODO: what about the SnAp-1?
+
+The results of the experiment are shown in Fig. \ref{animal_results}. We can see that SnAp-1 and T-BPTT perform the worst on this benchmark. The columnar and the constructive approaches achieve a significantly lower error than these baselines. Furthermore, these two methods achieve an asymptotic performance that is similar to each other. Finally, the hybrid approach, which is a combination of the constructive and the columnar approaches, achieves the lowest asymptotic error out of all the methods presented.
+
+From these experiments, we have shown that despite our methods limiting the class of the function approximators that we can use, the unbiased and low-variance gradient updates allow these methods to achieve a potentially better performance in the challenging online prediction tasks, while still maintaining linear scalability with time.
+
+TODO: The T-BPTT curve here is not using eligibility traces. Should the size still be adjusted?
+
+TODO: Where are the plots for columnar with 23 total features stored? I should plot those instead maybe.
+
+
 \section{Temporally symmetric hierarchical recurrent learning using generate and test}  
 The primary limitation of the constructive and hybrid approaches is that they are not suitable for continual learning. Once a feature is frozen, it never changes, even if the environment does. In the constructive case, the agent can, at best, continually update one recurrent feature. In the hybrid case, the agent can update $k$ recurrent units added last. Inability to update all features after a certain number of time steps  make the agent lose the ability to  modify its feature representation. In a sense, the agent becomes a linear learner. 
 
@@ -243,6 +271,10 @@ To identify useless features, we simply look at how much a feature contributes t
 
 
 % Acknowledgements should go at the end, before appendices and references
+
+\section{Conclusions}
+Use hybrid networks.
+
 
 \acks{We would like to acknowledge support for this project
 from the National Science Foundation (NSF grant IIS-9988642)

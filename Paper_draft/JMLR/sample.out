@@ -3,20 +3,22 @@
 \BOOKMARK [2][-]{subsection.2.1}{Recurrent learning}{section.2}% 3
 \BOOKMARK [2][-]{subsection.2.2}{General value functions and }{section.2}% 4
 \BOOKMARK [1][-]{section.3}{Problem Formulation}{}% 5
-\BOOKMARK [1][-]{section.4}{Divergence for truncated-backprop and Snap-1}{}% 6
-\BOOKMARK [1][-]{section.5}{Proposed methods}{}% 7
-\BOOKMARK [1][-]{section.6}{Empirical evaluation}{}% 8
-\BOOKMARK [1][-]{section.7}{Temporally symmetric hierarchical recurrent learning using generate and test}{}% 9
-\BOOKMARK [1][-]{appendix.A}{Forward-mode gradient computation of an LSTM cell }{}% 10
-\BOOKMARK [2][-]{subsection.A.1}{h\(t\)Wi}{appendix.A}% 11
-\BOOKMARK [2][-]{subsection.A.2}{h\(t\)ui}{appendix.A}% 12
-\BOOKMARK [2][-]{subsection.A.3}{h\(t\)bi}{appendix.A}% 13
-\BOOKMARK [2][-]{subsection.A.4}{h\(t\)Wfj}{appendix.A}% 14
-\BOOKMARK [2][-]{subsection.A.5}{h\(t\)Woj}{appendix.A}% 15
-\BOOKMARK [2][-]{subsection.A.6}{h\(t\)Wgj}{appendix.A}% 16
-\BOOKMARK [2][-]{subsection.A.7}{h\(t\)uo}{appendix.A}% 17
-\BOOKMARK [2][-]{subsection.A.8}{h\(t\)uf}{appendix.A}% 18
-\BOOKMARK [2][-]{subsection.A.9}{h\(t\)ug}{appendix.A}% 19
-\BOOKMARK [2][-]{subsection.A.10}{h\(t\)bg}{appendix.A}% 20
-\BOOKMARK [2][-]{subsection.A.11}{h\(t\)bf}{appendix.A}% 21
-\BOOKMARK [2][-]{subsection.A.12}{h\(t\)bo}{appendix.A}% 22
+\BOOKMARK [2][-]{subsection.3.1}{Animal Learning Benchmarks}{section.3}% 6
+\BOOKMARK [1][-]{section.4}{Divergence for truncated-backprop and Snap-1}{}% 7
+\BOOKMARK [1][-]{section.5}{Proposed methods}{}% 8
+\BOOKMARK [1][-]{section.6}{Empirical evaluation}{}% 9
+\BOOKMARK [1][-]{section.7}{Temporally symmetric hierarchical recurrent learning using generate and test}{}% 10
+\BOOKMARK [1][-]{section.8}{Conclusions}{}% 11
+\BOOKMARK [1][-]{appendix.A}{Forward-mode gradient computation of an LSTM cell }{}% 12
+\BOOKMARK [2][-]{subsection.A.1}{h\(t\)Wi}{appendix.A}% 13
+\BOOKMARK [2][-]{subsection.A.2}{h\(t\)ui}{appendix.A}% 14
+\BOOKMARK [2][-]{subsection.A.3}{h\(t\)bi}{appendix.A}% 15
+\BOOKMARK [2][-]{subsection.A.4}{h\(t\)Wfj}{appendix.A}% 16
+\BOOKMARK [2][-]{subsection.A.5}{h\(t\)Woj}{appendix.A}% 17
+\BOOKMARK [2][-]{subsection.A.6}{h\(t\)Wgj}{appendix.A}% 18
+\BOOKMARK [2][-]{subsection.A.7}{h\(t\)uo}{appendix.A}% 19
+\BOOKMARK [2][-]{subsection.A.8}{h\(t\)uf}{appendix.A}% 20
+\BOOKMARK [2][-]{subsection.A.9}{h\(t\)ug}{appendix.A}% 21
+\BOOKMARK [2][-]{subsection.A.10}{h\(t\)bg}{appendix.A}% 22
+\BOOKMARK [2][-]{subsection.A.11}{h\(t\)bf}{appendix.A}% 23
+\BOOKMARK [2][-]{subsection.A.12}{h\(t\)bo}{appendix.A}% 24
