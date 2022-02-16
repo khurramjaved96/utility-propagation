@@ -26,11 +26,11 @@
      inkscape:document-units="pt"
      showgrid="true"
      inkscape:zoom="1.6891487"
-     inkscape:cx="333.6"
+     inkscape:cx="333.896"
      inkscape:cy="201.87684"
-     inkscape:window-width="1920"
+     inkscape:window-width="957"
      inkscape:window-height="1172"
-     inkscape:window-x="0"
+     inkscape:window-x="963"
      inkscape:window-y="28"
      inkscape:window-maximized="0"
      inkscape:current-layer="svg66893">
@@ -621,7 +621,7 @@
   </g>
   <text
      xml:space="preserve"
-     style="font-style:normal;font-weight:normal;font-size:11px;line-height:1.25;font-family:sans-serif;fill:#3e83ba;fill-opacity:1;stroke:none;stroke-width:0.75;stroke-linecap:butt;stroke-linejoin:round"
+     style="font-style:normal;font-weight:normal;font-size:11px;line-height:1.25;font-family:sans-serif;word-spacing:0px;fill:#3e83ba;fill-opacity:1;stroke:none;stroke-width:0.75;stroke-linecap:butt;stroke-linejoin:round"
      x="186.82979"
      y="89.061554"
      id="text4473"><tspan
@@ -629,7 +629,7 @@
        id="tspan4471"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11px;font-family:STIXGeneral;-inkscape-font-specification:STIXGeneral;fill:#3e83ba;fill-opacity:1;stroke-width:0.75"
        x="186.82979"
-       y="89.061554">SnAp-1</tspan></text>
+       y="89.061554">Diagonal Jacobian (Biased RTRL)</tspan></text>
   <text
      xml:space="preserve"
      style="font-style:normal;font-weight:normal;font-size:11px;line-height:1.25;font-family:sans-serif;fill:#e62527;fill-opacity:1;stroke:none;stroke-width:0.75;stroke-linecap:butt;stroke-linejoin:round"
