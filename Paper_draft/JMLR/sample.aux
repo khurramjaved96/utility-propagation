@@ -34,38 +34,44 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Animal Learning Benchmarks}{5}{subsection.3.1}}
 \newlabel{animal_bench}{{3.1}{5}{Animal Learning Benchmarks}{subsection.3.1}{}}
 \newlabel{animal_results}{{6}{6}{Animal Learning Benchmarks}{section.6}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces  Left: Comparison of the predictions produced by the different methods for the last 400 timesteps of training. Right: Performance when an LSTM is trained using the proposed and other online baseline methods on the trace patterning benchmark (lower is better). All the runs are averaged using 30 seeds, and the error regions are the 95\% confidence intervals. T-BPTT uses a truncation length k=27. We can see from this plot that the SnAp-1 method performs the worst while the hybrid networks achieve the lowest error. TODO: T-BPTT is only 15 runs while the remaining curves are 30 runs. TODO: Maybe hybrid networks should get a better name so that people can refer to it easily?}}{6}{figure.2}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces  Left: Comparison of the predictions produced by the different methods for the last 400 timesteps of training. Right: Performance when an LSTM is trained using the proposed and other online baseline methods on the trace patterning benchmark (lower is better). All the runs are averaged using 30 seeds, and the error regions are the 95\% confidence intervals. T-BPTT uses a truncation length k=27. We can see from this plot that the Diagonal Jacobian method performs the worst while the hybrid networks achieve the lowest error. TODO: T-BPTT is only 15 runs while the remaining curves are 30 runs. TODO: Maybe hybrid networks should get a better name so that people can refer to it easily?}}{6}{figure.2}}
 \@writefile{toc}{\contentsline {section}{\numberline {4}Divergence for truncated-backprop and Snap-1}{6}{section.4}}
 \@writefile{toc}{\contentsline {section}{\numberline {5}Proposed methods}{6}{section.5}}
 \@writefile{toc}{\contentsline {section}{\numberline {6}Empirical evaluation}{7}{section.6}}
 \@writefile{toc}{\contentsline {section}{\numberline {7}Temporally symmetric hierarchical recurrent learning using generate and test}{7}{section.7}}
 \@writefile{toc}{\contentsline {section}{\numberline {8}Conclusions}{8}{section.8}}
-\@writefile{toc}{\contentsline {section}{\numberline {A}Forward-mode gradient computation of an LSTM cell }{9}{appendix.A}}
-\newlabel{i}{{8}{9}{Appendix A}{equation.A.8}{}}
-\newlabel{f}{{9}{9}{Appendix A}{equation.A.9}{}}
-\newlabel{o}{{10}{9}{Appendix A}{equation.A.10}{}}
-\newlabel{g}{{11}{9}{Appendix A}{equation.A.11}{}}
-\newlabel{c}{{12}{9}{Appendix A}{equation.A.12}{}}
-\newlabel{state_update}{{13}{9}{Appendix A}{equation.A.13}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.1}$\frac  {\partial h(t)}{\partial W_{i}}$}{9}{subsection.A.1}}
-\newlabel{def1}{{14}{9}{$\frac {\partial h(t)}{\partial W_{i}}$}{equation.A.14}{}}
-\newlabel{def2}{{15}{9}{$\frac {\partial h(t)}{\partial W_{i}}$}{equation.A.15}{}}
-\newlabel{def3}{{16}{9}{$\frac {\partial h(t)}{\partial W_{i}}$}{equation.A.16}{}}
-\newlabel{def4}{{17}{9}{$\frac {\partial h(t)}{\partial W_{i}}$}{equation.A.17}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.2}$\frac  {\partial h(t)}{\partial u_i}$}{11}{subsection.A.2}}
-\newlabel{thu}{{18}{11}{$\frac {\partial h(t)}{\partial u_i}$}{equation.A.18}{}}
-\newlabel{tcu}{{20}{11}{$\frac {\partial h(t)}{\partial u_i}$}{equation.A.20}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.3}$\frac  {\partial h(t)}{\partial b_i}$}{12}{subsection.A.3}}
-\newlabel{thb}{{22}{12}{$\frac {\partial h(t)}{\partial b_i}$}{equation.A.22}{}}
-\newlabel{tcb}{{24}{12}{$\frac {\partial h(t)}{\partial b_i}$}{equation.A.24}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.4}$\frac  {\partial h(t)}{\partial W_{f_j}}$}{13}{subsection.A.4}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.5}$\frac  {\partial h(t)}{\partial W_{o_j}}$}{14}{subsection.A.5}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.6}$\frac  {\partial h(t)}{\partial W_{g_j}}$}{14}{subsection.A.6}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.7}$\frac  {\partial h(t)}{\partial u_{o}}$}{15}{subsection.A.7}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.8}$\frac  {\partial h(t)}{\partial u_{f}}$}{15}{subsection.A.8}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.9}$\frac  {\partial h(t)}{\partial u_{g}}$}{16}{subsection.A.9}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.10}$\frac  {\partial h(t)}{\partial b_{g}}$}{16}{subsection.A.10}}
+\@writefile{toc}{\contentsline {section}{\numberline {A}Hyper-parameter Settings}{9}{appendix.A}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Sweep ranges for each hyper-parameter. TODO: The notation for last two rows is just placeholder. Replace it with something appropriate.}}{9}{table.1}}
+\newlabel{tab:sweep-ranges}{{1}{9}{Sweep ranges for each hyper-parameter. TODO: The notation for last two rows is just placeholder. Replace it with something appropriate}{table.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces The best hyper-parameter configuration found for each method according to the average final error over multiple runs. Note that although we specify the $n$ parameter for T-BPTT, Diagonal Jacobian and Columnar approaches, no new feature will be added during their training. It is simply the width of the network. }}{9}{table.2}}
+\newlabel{tab:best-params}{{2}{9}{The best hyper-parameter configuration found for each method according to the average final error over multiple runs. Note that although we specify the $n$ parameter for T-BPTT, Diagonal Jacobian and Columnar approaches, no new feature will be added during their training. It is simply the width of the network}{table.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {B}Implementation Details}{9}{appendix.B}}
+\@writefile{toc}{\contentsline {section}{\numberline {C}Forward-mode gradient computation of an LSTM cell }{10}{appendix.C}}
+\newlabel{i}{{8}{10}{Appendix B}{equation.C.8}{}}
+\newlabel{f}{{9}{10}{Appendix B}{equation.C.9}{}}
+\newlabel{o}{{10}{10}{Appendix B}{equation.C.10}{}}
+\newlabel{g}{{11}{10}{Appendix B}{equation.C.11}{}}
+\newlabel{c}{{12}{10}{Appendix B}{equation.C.12}{}}
+\newlabel{state_update}{{13}{10}{Appendix B}{equation.C.13}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.1}$\frac  {\partial h(t)}{\partial W_{i}}$}{10}{subsection.C.1}}
+\newlabel{def1}{{14}{10}{$\frac {\partial h(t)}{\partial W_{i}}$}{equation.C.14}{}}
+\newlabel{def2}{{15}{10}{$\frac {\partial h(t)}{\partial W_{i}}$}{equation.C.15}{}}
+\newlabel{def3}{{16}{10}{$\frac {\partial h(t)}{\partial W_{i}}$}{equation.C.16}{}}
+\newlabel{def4}{{17}{10}{$\frac {\partial h(t)}{\partial W_{i}}$}{equation.C.17}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.2}$\frac  {\partial h(t)}{\partial u_i}$}{12}{subsection.C.2}}
+\newlabel{thu}{{18}{12}{$\frac {\partial h(t)}{\partial u_i}$}{equation.C.18}{}}
+\newlabel{tcu}{{20}{12}{$\frac {\partial h(t)}{\partial u_i}$}{equation.C.20}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.3}$\frac  {\partial h(t)}{\partial b_i}$}{13}{subsection.C.3}}
+\newlabel{thb}{{22}{13}{$\frac {\partial h(t)}{\partial b_i}$}{equation.C.22}{}}
+\newlabel{tcb}{{24}{13}{$\frac {\partial h(t)}{\partial b_i}$}{equation.C.24}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.4}$\frac  {\partial h(t)}{\partial W_{f_j}}$}{14}{subsection.C.4}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.5}$\frac  {\partial h(t)}{\partial W_{o_j}}$}{15}{subsection.C.5}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.6}$\frac  {\partial h(t)}{\partial W_{g_j}}$}{15}{subsection.C.6}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.7}$\frac  {\partial h(t)}{\partial u_{o}}$}{16}{subsection.C.7}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.8}$\frac  {\partial h(t)}{\partial u_{f}}$}{16}{subsection.C.8}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.9}$\frac  {\partial h(t)}{\partial u_{g}}$}{17}{subsection.C.9}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.10}$\frac  {\partial h(t)}{\partial b_{g}}$}{17}{subsection.C.10}}
 \bibdata{sample}
 \bibcite{Rafiee2020TestbedsFR}{{1}{2020}{{Rafiee}}{{}}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.11}$\frac  {\partial h(t)}{\partial b_{f}}$}{17}{subsection.A.11}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.12}$\frac  {\partial h(t)}{\partial b_{o}}$}{17}{subsection.A.12}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.11}$\frac  {\partial h(t)}{\partial b_{f}}$}{18}{subsection.C.11}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.12}$\frac  {\partial h(t)}{\partial b_{o}}$}{18}{subsection.C.12}}

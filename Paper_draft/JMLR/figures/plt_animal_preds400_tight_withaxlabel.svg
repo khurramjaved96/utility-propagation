@@ -24,9 +24,9 @@
      inkscape:pageopacity="0"
      inkscape:pagecheckerboard="1"
      inkscape:document-units="pt"
-     showgrid="false"
+     showgrid="true"
      inkscape:zoom="1.106727"
-     inkscape:cx="379.49739"
+     inkscape:cx="420.15783"
      inkscape:cy="217.75922"
      inkscape:window-width="951"
      inkscape:window-height="1172"
@@ -1034,25 +1034,25 @@
        y="132.81262">Columnar Networks</tspan></text>
   <text
      xml:space="preserve"
-     style="font-style:normal;font-weight:normal;font-size:11px;line-height:1.25;font-family:sans-serif;fill:#3e83ba;fill-opacity:1;stroke:none;stroke-width:0.75;stroke-linecap:butt;stroke-linejoin:round"
-     x="441.93665"
+     style="font-style:normal;font-weight:normal;font-size:11px;line-height:1.25;font-family:sans-serif;word-spacing:0px;fill:#3e83ba;fill-opacity:1;stroke:none;stroke-width:0.75;stroke-linecap:butt;stroke-linejoin:round"
+     x="239.46469"
      y="78.354462"
      id="text4473"><tspan
        sodipodi:role="line"
        id="tspan4471"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11px;font-family:STIXGeneral;-inkscape-font-specification:STIXGeneral;fill:#3e83ba;fill-opacity:1;stroke-width:0.75"
-       x="441.93665"
-       y="78.354462">SnAp-1</tspan></text>
+       x="239.46469"
+       y="78.354462">Diagonal Jacobian (Biased RTRL)</tspan></text>
   <text
      xml:space="preserve"
      style="font-style:normal;font-weight:normal;font-size:11px;line-height:1.25;font-family:sans-serif;fill:#984ea3;fill-opacity:1;stroke:none;stroke-width:0.75;stroke-linecap:butt;stroke-linejoin:round"
-     x="359.38358"
+     x="241.07994"
      y="185.13148"
      id="text4473-5-8-0"><tspan
        sodipodi:role="line"
        id="tspan4471-4-7-6"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11px;font-family:STIXGeneral;-inkscape-font-specification:STIXGeneral;fill:#984ea3;fill-opacity:1;stroke-width:0.75"
-       x="359.38358"
+       x="241.07994"
        y="185.13148">Constructive Networks</tspan></text>
   <text
      xml:space="preserve"

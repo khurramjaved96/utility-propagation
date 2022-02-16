@@ -9,16 +9,18 @@
 \BOOKMARK [1][-]{section.6}{Empirical evaluation}{}% 9
 \BOOKMARK [1][-]{section.7}{Temporally symmetric hierarchical recurrent learning using generate and test}{}% 10
 \BOOKMARK [1][-]{section.8}{Conclusions}{}% 11
-\BOOKMARK [1][-]{appendix.A}{Forward-mode gradient computation of an LSTM cell }{}% 12
-\BOOKMARK [2][-]{subsection.A.1}{h\(t\)Wi}{appendix.A}% 13
-\BOOKMARK [2][-]{subsection.A.2}{h\(t\)ui}{appendix.A}% 14
-\BOOKMARK [2][-]{subsection.A.3}{h\(t\)bi}{appendix.A}% 15
-\BOOKMARK [2][-]{subsection.A.4}{h\(t\)Wfj}{appendix.A}% 16
-\BOOKMARK [2][-]{subsection.A.5}{h\(t\)Woj}{appendix.A}% 17
-\BOOKMARK [2][-]{subsection.A.6}{h\(t\)Wgj}{appendix.A}% 18
-\BOOKMARK [2][-]{subsection.A.7}{h\(t\)uo}{appendix.A}% 19
-\BOOKMARK [2][-]{subsection.A.8}{h\(t\)uf}{appendix.A}% 20
-\BOOKMARK [2][-]{subsection.A.9}{h\(t\)ug}{appendix.A}% 21
-\BOOKMARK [2][-]{subsection.A.10}{h\(t\)bg}{appendix.A}% 22
-\BOOKMARK [2][-]{subsection.A.11}{h\(t\)bf}{appendix.A}% 23
-\BOOKMARK [2][-]{subsection.A.12}{h\(t\)bo}{appendix.A}% 24
+\BOOKMARK [1][-]{appendix.A}{Hyper-parameter Settings}{}% 12
+\BOOKMARK [1][-]{appendix.B}{Implementation Details}{}% 13
+\BOOKMARK [1][-]{appendix.C}{Forward-mode gradient computation of an LSTM cell }{}% 14
+\BOOKMARK [2][-]{subsection.C.1}{h\(t\)Wi}{appendix.C}% 15
+\BOOKMARK [2][-]{subsection.C.2}{h\(t\)ui}{appendix.C}% 16
+\BOOKMARK [2][-]{subsection.C.3}{h\(t\)bi}{appendix.C}% 17
+\BOOKMARK [2][-]{subsection.C.4}{h\(t\)Wfj}{appendix.C}% 18
+\BOOKMARK [2][-]{subsection.C.5}{h\(t\)Woj}{appendix.C}% 19
+\BOOKMARK [2][-]{subsection.C.6}{h\(t\)Wgj}{appendix.C}% 20
+\BOOKMARK [2][-]{subsection.C.7}{h\(t\)uo}{appendix.C}% 21
+\BOOKMARK [2][-]{subsection.C.8}{h\(t\)uf}{appendix.C}% 22
+\BOOKMARK [2][-]{subsection.C.9}{h\(t\)ug}{appendix.C}% 23
+\BOOKMARK [2][-]{subsection.C.10}{h\(t\)bg}{appendix.C}% 24
+\BOOKMARK [2][-]{subsection.C.11}{h\(t\)bf}{appendix.C}% 25
+\BOOKMARK [2][-]{subsection.C.12}{h\(t\)bo}{appendix.C}% 26
