@@ -13,7 +13,9 @@ Snap1::Snap1(float step_size,
              int seed,
              int no_of_input_features,
              int total_targets,
-             int total_recurrent_features) {
+             int total_recurrent_features,
+             int layer_size) {
+  this->layer_size = layer_size;
   this->step_size = step_size;
   this->mt.seed(seed);
   std::uniform_real_distribution<float> weight_sampler(-0.1, 0.1);
@@ -35,26 +37,28 @@ Snap1::Snap1(float step_size,
                      weight_sampler(mt),
                      weight_sampler(mt),
                      weight_sampler(mt));
-//    for (int counter = 0; counter < this->input_neurons.size(); counter++) {
-//      Neuron *neuron_ref = &this->input_neurons[counter];
-//      lstm_neuron.add_synapse(neuron_ref,
-//                              weight_sampler(mt),
-//                              weight_sampler(mt),
-//                              weight_sampler(mt),
-//                              weight_sampler(mt));
-//    }
+    for (int counter = 0; counter < this->input_neurons.size(); counter++) {
+      Neuron *neuron_ref = &this->input_neurons[counter];
+      lstm_neuron.add_synapse(neuron_ref,
+                              weight_sampler(mt),
+                              weight_sampler(mt),
+                              weight_sampler(mt),
+                              weight_sampler(mt));
+    }
     indexes_lstm_cells.push_back(i);
     this->LSTM_neurons.push_back(lstm_neuron);
   }
 
   for(int counter = 0; counter < total_recurrent_features; counter++){
+    int layer_no = counter/layer_size;
     int incoming_features = 0;
     std::vector<int> map_index(no_of_input_features + total_recurrent_features, 0);
-    while(incoming_features < 28){
+    while(incoming_features < no_of_input_features){
       int index = index_sampler(mt);
       if(map_index[index] == 0){
         map_index[index] = 1;
         if(index < no_of_input_features){
+//          std::cout << "Inp " << index << "\t" << counter << std::endl;
           incoming_features++;
           Neuron *neuron_ref = &this->input_neurons[index];
           LSTM_neurons[counter].add_synapse(neuron_ref,
@@ -65,7 +69,9 @@ Snap1::Snap1(float step_size,
         }
         else{
           index = index - no_of_input_features;
-          if(index < counter) {
+          int new_layer_no = index/ layer_size;
+          if(new_layer_no < layer_no) {
+//            std::cout << index << "\t" << counter << std::endl;
             incoming_features++;
             Neuron *neuron_ref = &this->LSTM_neurons[index];
             LSTM_neurons[counter].add_synapse(neuron_ref,
@@ -78,9 +84,15 @@ Snap1::Snap1(float step_size,
       }
     }
   }
+
+//  std::cout << "From\tTo\n";
 //  for (int outer = 0; outer < total_recurrent_features; outer++) {
 //    for (int inner = 0; inner < total_recurrent_features; inner++) {
-//      if (outer < inner) {
+//      int temp_outer = outer/ layer_size;
+//      int temp_inner = inner/ layer_size;
+//
+//      if (temp_outer < temp_inner) {
+////        std::cout << outer << "\t" << inner <<std::endl;
 //        Neuron *neuron_ref = &this->LSTM_neurons[outer];
 //        LSTM_neurons[inner].add_synapse(neuron_ref,
 //                                        weight_sampler(mt),
@@ -118,7 +130,7 @@ void Snap1::forward(std::vector<float> inputs) {
     this->input_neurons[i].value = inputs[i];
   }
   std::for_each(
-      std::execution::par_unseq,
+      std::execution::seq,
       this->LSTM_neurons.begin(),
       this->LSTM_neurons.end(),
       [&](LSTM &n) {
@@ -127,7 +139,7 @@ void Snap1::forward(std::vector<float> inputs) {
       });
 
   std::for_each(
-      std::execution::par_unseq,
+      std::execution::seq,
       this->LSTM_neurons.begin(),
       this->LSTM_neurons.end(),
       [&](LSTM &n) {
@@ -135,7 +147,7 @@ void Snap1::forward(std::vector<float> inputs) {
       });
 
   std::for_each(
-      std::execution::par_unseq,
+      std::execution::seq,
       this->LSTM_neurons.begin(),
       this->LSTM_neurons.end(),
       [&](LSTM &n) {
@@ -143,7 +155,7 @@ void Snap1::forward(std::vector<float> inputs) {
       });
 
   std::for_each(
-      std::execution::par_unseq,
+      std::execution::seq,
       this->indexes.begin(),
       this->indexes.end(),
       [&](int index) {
@@ -169,7 +181,7 @@ float Snap1::backward(std::vector<float> targets) {
   }
 //  Update the prediction weights
   std::for_each(
-      std::execution::par_unseq,
+      std::execution::seq,
       this->indexes_lstm_cells.begin(),
       this->indexes_lstm_cells.end(),
       [&](int index) {
@@ -190,35 +202,42 @@ float Snap1::backward(std::vector<float> targets) {
 
 }
 
-void Snap1::update_parameters() {
+void Snap1::update_parameters(int layer) {
+  int neurons_in_layer = layer* layer_size;
+//  int end_range = min(neurons_in_layer+ layer_size, LSTM_neurons.size());
+//  for(int temp_counter = neurons_in_layer; temp_counter < end_range; temp_counter++)
+//    LSTM_neurons[temp_counter].update_weights(step_size);
+//  for (int i = 0; i < pred++) {
+//    prediction_weights[i][layer] +=
+//        LSTM_neurons[layer].value * errors[i] * step_size * predictions[i] * (1 - predictions[i]);
+//  }
+
+
   std::for_each(
-      std::execution::par_unseq,
+      std::execution::seq,
       this->indexes_lstm_cells.begin(),
       this->indexes_lstm_cells.end(),
       [&](int index) {
-        LSTM_neurons[index].update_weights(step_size);
+        if(index <= (layer+1) *  layer_size)
+          LSTM_neurons[index].update_weights(step_size);
       });
 
   std::for_each(
-      std::execution::par_unseq,
+      std::execution::seq,
       this->indexes_lstm_cells.begin(),
       this->indexes_lstm_cells.end(),
       [&](int index) {
-        for (int i = 0; i < predictions.size(); i++) {
-          prediction_weights[i][index] +=
-              LSTM_neurons[index].value * errors[i] * step_size * predictions[i] * (1 - predictions[i]);
+        if(index < (layer+1) *  layer_size) {
+          for (int i = 0; i < predictions.size(); i++) {
+            prediction_weights[i][index] +=
+                LSTM_neurons[index].value * errors[i] * step_size * predictions[i] * (1 - predictions[i]);
+          }
         }
       }
   );
 
-  for (
-      int i = 0;
-      i < predictions.
-          size();
-      i++) {
-    bias[i] += errors[i] *
-        step_size * predictions[i]
-        * (1 - predictions[i]);
+  for (int i = 0; i < predictions.size(); i++) {
+    bias[i] += errors[i] * step_size * predictions[i] * (1 - predictions[i]);
   }
 //  std::cout << "Bias = " << bias[0] << std::endl;
 //  std::cout << "Bias = " << bias[1] << std::endl;

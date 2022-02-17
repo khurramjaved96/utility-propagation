@@ -28,6 +28,7 @@ class Snap1 {
   std::vector<float> predictions;
   std::vector<float> bias;
   std::vector<float> errors;
+  float layer_size;
 
   //  These indexes are used to do parallel computation since std::parallel does not provide rank of a thread
   std::vector<int> indexes;
@@ -41,7 +42,7 @@ class Snap1 {
 
   std::vector<float> read_output_values();
 
-  Snap1(float step_size, int seed, int no_of_input_features, int total_targets, int total_recurrent_features);
+  Snap1(float step_size, int seed, int no_of_input_features, int total_targets, int total_recurrent_features, int layer_size);
 
   ~Snap1();
 
@@ -49,7 +50,7 @@ class Snap1 {
 
   float backward(std::vector<float> targets);
 
-  void update_parameters();
+  void update_parameters(int layer);
 
   void reset_state();
 

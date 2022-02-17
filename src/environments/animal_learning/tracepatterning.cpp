@@ -9,9 +9,8 @@
 #include "../../../include/nn/utils.h"
 #include "../../../include/environments/animal_learning/tracecondioning.h"
 
-TracePatterning::TracePatterning(std::pair<int, int> ISI, std::pair<int, int> ISI_long, std::pair<int, int> ITI,
+TracePatterning::TracePatterning(std::pair<int, int> ISI,  std::pair<int, int> ITI,
                                  int num_distractors, int seed) : ISI_sampler(ISI.first, ISI.second),
-                                                                  ISI_long_sampler(ISI_long.first, ISI_long.second),
                                                                   ITI_sampler(ITI.first, ITI.second), mt(seed),
                                                                   NoiseSampler(0, 1) {
   this->num_distractors = num_distractors;
@@ -73,7 +72,6 @@ std::vector<float> TracePatterning::step() {
 
 std::vector<float> TracePatterning::reset() {
   this->remaining_until_US = ISI_sampler(mt);
-  this->remaining_until_US_long = ISI_long_sampler(mt);
   this->remaining_steps = this->remaining_until_US_long + ITI_sampler(mt);
   std::vector<float> state_pattern = this->create_pattern();
   std::uniform_int_distribution<int> valid_or_invalid(0, 1);
@@ -92,12 +90,14 @@ std::vector<float> TracePatterning::reset() {
 }
 
 void TracePatterning::set_noise_bits() {
+  float counter = 1.0;
   for (int temp = this->pattern_len + 1; temp < this->pattern_len + 1 + this->num_distractors; temp++) {
-    if (NoiseSampler(mt) > 0.98) {
+    if (NoiseSampler(mt) < 1/(counter*10) ) {
       this->current_state[temp] = 1;
     } else {
       this->current_state[temp] = 0;
     }
+    counter++;
   }
 }
 

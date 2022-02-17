@@ -13,10 +13,10 @@ ColumnarLSTM::ColumnarLSTM(float step_size,
                            int seed,
                            int no_of_input_features,
                            int total_targets,
-                           int total_recurrent_features) {
+                           int total_recurrent_features, float init_range) {
   this->step_size = step_size;
   this->mt.seed(seed);
-  std::uniform_real_distribution<float> weight_sampler(-0.1, 0.1);
+  std::uniform_real_distribution<float> weight_sampler(-init_range, init_range);
 
   for (int i = 0; i < no_of_input_features; i++) {
     LinearNeuron n(true, false);
@@ -73,7 +73,7 @@ void ColumnarLSTM::forward(std::vector<float> inputs) {
     this->input_neurons[i].value = inputs[i];
   }
   std::for_each(
-      std::execution::par_unseq,
+      std::execution::seq,
       this->LSTM_neurons.begin(),
       this->LSTM_neurons.end(),
       [&](LSTM &n) {
@@ -82,7 +82,7 @@ void ColumnarLSTM::forward(std::vector<float> inputs) {
       });
 
   std::for_each(
-      std::execution::par_unseq,
+      std::execution::seq,
       this->indexes.begin(),
       this->indexes.end(),
       [&](int index) {
@@ -108,7 +108,7 @@ float ColumnarLSTM::backward(std::vector<float> targets) {
   }
 //  Update the prediction weights
   std::for_each(
-      std::execution::par_unseq,
+      std::execution::seq,
       this->indexes_lstm_cells.begin(),
       this->indexes_lstm_cells.end(),
       [&](int index) {
@@ -131,7 +131,7 @@ float ColumnarLSTM::backward(std::vector<float> targets) {
 
 void ColumnarLSTM::update_parameters() {
   std::for_each(
-      std::execution::par_unseq,
+      std::execution::seq,
       this->indexes_lstm_cells.begin(),
       this->indexes_lstm_cells.end(),
       [&](int index) {
@@ -139,7 +139,7 @@ void ColumnarLSTM::update_parameters() {
       });
 
   std::for_each(
-      std::execution::par_unseq,
+      std::execution::seq,
       this->indexes_lstm_cells.begin(),
       this->indexes_lstm_cells.end(),
       [&](int index) {

@@ -22,7 +22,7 @@ class TDLambda {
 
  public:
 //
-
+//
 
   float step_size;
   float predictions;
@@ -44,6 +44,10 @@ class TDLambda {
 
   std::vector<LSTM> LSTM_neurons;
 
+  std::vector<float> real_all_running_mean();
+
+  std::vector<float> read_all_running_variance();
+
   float read_output_values();
 
   TDLambda(float step_size, int seed, int no_of_input_features, int total_targets, int total_recurrent_features, int layer_size);
@@ -59,6 +63,8 @@ class TDLambda {
   void backward();
 
   void update_parameters(int layer, float error);
+
+  void update_parameters_no_freeze(float error);
 
   void reset_state();
 

@@ -26,10 +26,6 @@ int main(int argc, char *argv[]) {
                             std::vector < std::string > {"run", "step", "x0", "x1", "x2", "x3", "x4", "x5", "x6", "pred", "target"},
                             std::vector < std::string > {"int", "int", "real" , "real", "real", "real", "real", "real", "real", "real", "real"},
                             std::vector < std::string > {"run", "step"});
-  Metric network_state = Metric(my_experiment.database_name, "network_state",
-                                std::vector <std::string > {"run", "step", "feature", "type", "value"},
-                                std::vector <std::string > {"int", "int", "int", "int", "real"},
-                                std::vector <std::string> {"run", "step", "type", "feature"});
 
   std::cout << "Program started \n";
 
@@ -71,30 +67,6 @@ int main(int argc, char *argv[]) {
       cur_error.push_back(std::to_string(real_target));
       avg_error.record_value(cur_error);
     }
-    if(i%100000 == 2000){
-      std::vector<float> network_state_cur = network.real_all_running_mean();
-      for(int counter_vec = 0; counter_vec < network_state_cur.size(); counter_vec++) {
-        std::vector<std::string> cur_state;
-        cur_state.push_back(std::to_string(my_experiment.get_int_param("run")));
-        cur_state.push_back(std::to_string(i));
-        cur_state.push_back(std::to_string(counter_vec));
-        cur_state.push_back(std::to_string(0));
-        cur_state.push_back(std::to_string(network_state_cur[counter_vec]));
-        network_state.record_value(cur_state);
-      }
-
-      network_state_cur = network.read_all_running_variance();
-      for(int counter_vec = 0; counter_vec < network_state_cur.size(); counter_vec++) {
-        std::vector<std::string> cur_state;
-        cur_state.push_back(std::to_string(my_experiment.get_int_param("run")));
-        cur_state.push_back(std::to_string(i));
-        cur_state.push_back(std::to_string(counter_vec));
-        cur_state.push_back(std::to_string(1));
-        cur_state.push_back(std::to_string(network_state_cur[counter_vec]));
-        network_state.record_value(cur_state);
-      }
-
-    }
     x = env.step();
     float target = env.get_US() + gamma*network.get_target_without_sideeffects(x);
 
@@ -105,7 +77,7 @@ int main(int argc, char *argv[]) {
     network.decay_gradient(my_experiment.get_float_param("lambda")*gamma);
 //    network.zero_grad();
     network.backward();
-    network.update_parameters(layer, error);
+    network.update_parameters_no_freeze(error);
     if(i%50000 == 20000){
       std::vector<std::string> cur_error;
       cur_error.push_back(std::to_string(my_experiment.get_int_param("run")));
@@ -113,7 +85,7 @@ int main(int argc, char *argv[]) {
       cur_error.push_back(std::to_string(running_error));
       error_metric.record_value(cur_error);
     }
-
+//
 
 //    if(i%10000 < 300)
 //      std::cout << "Prediction = " << pred << " Target " << real_target << " Bootstrapped target "<< target << " US " << env.get_US() << std::endl;
@@ -121,7 +93,6 @@ int main(int argc, char *argv[]) {
       std::cout << "Step = " << i << " Error = " << running_error << std::endl;
       error_metric.commit_values();
       avg_error.commit_values();
-      network_state.commit_values();
     }
   }
   error_metric.commit_values();

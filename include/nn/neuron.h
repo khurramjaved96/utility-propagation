@@ -18,6 +18,7 @@
 
 class Neuron : public dynamic_elem {
  public:
+  bool frozen;
   bool is_recurrent_neuron;
   static int64_t neuron_id_generator;
   static std::mt19937 gen;
@@ -31,6 +32,8 @@ class Neuron : public dynamic_elem {
   float neuron_utility;
   float neuron_utility_to_distribute;
   float sum_of_utility_traces;
+  float running_mean;
+  float running_variance;
   bool is_output_neuron;
   bool useless_neuron;
   int64_t id;
@@ -105,6 +108,8 @@ class LSTM : public Neuron{
   std::vector<float> w_f;
   std::vector<float> w_g;
   std::vector<float> w_o;
+  std::vector<float> input_means;
+  std::vector<float> input_std;
 
 
 
@@ -154,9 +159,17 @@ class LSTM : public Neuron{
 
  public:
 
+  void update_statistics();
+
+  std::vector<float> get_normalized_values();
+
   std::vector<Neuron *> incoming_neurons;
 
+  float get_value_without_sideeffects();
+
   int get_users();
+
+  void decay_gradient(float decay_rate);
 
   void increment_user();
 
@@ -177,6 +190,8 @@ class LSTM : public Neuron{
   float get_hidden_state();
 
   void update_weights(float step_size);
+
+  void update_weights(float step_size, float error);
 
   void add_synapse(Neuron* s, float w_i, float w_f, float w_g, float w_o);
 

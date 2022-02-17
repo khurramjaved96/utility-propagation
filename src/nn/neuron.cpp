@@ -13,6 +13,7 @@
 
 Neuron::Neuron(bool is_input, bool is_output) {
   value = 0;
+  frozen = false;
   value_before_firing = 0;
   id = neuron_id_generator;
   useless_neuron = false;

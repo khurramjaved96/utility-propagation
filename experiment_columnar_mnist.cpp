@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
                                   my_experiment.get_int_param("seed"),
                                   28,
                                   10,
-                                  my_experiment.get_int_param("features"));
+                                  my_experiment.get_int_param("features"), my_experiment.get_float_param("init"));
 
   for(int counter = 0; counter < total_data_points; counter++){
     std::vector<float> x_temp;
@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
       std::cout << "Accuracy = " << accuracy << std::endl;
 
     }
-    if(i%10000 == 0) {
+    if(i%60000 == 0) {
 //      Evaluate test set
       network.reset_state();
       float correct_predictions = 0;

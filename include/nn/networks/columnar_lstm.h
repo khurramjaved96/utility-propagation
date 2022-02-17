@@ -40,7 +40,7 @@ class ColumnarLSTM {
 
   std::vector<float> read_output_values();
 
-  ColumnarLSTM(float step_size, int seed, int no_of_input_features, int total_targets, int total_recurrent_features);
+  ColumnarLSTM(float step_size, int seed, int no_of_input_features, int total_targets, int total_recurrent_features, float init_range);
 
   ~ColumnarLSTM();
 

@@ -54,7 +54,8 @@ int main(int argc, char *argv[]) {
                               my_experiment.get_int_param("seed"),
                               28,
                               10,
-                              my_experiment.get_int_param("features"));
+                              my_experiment.get_int_param("features"),
+                              my_experiment.get_int_param("width"));
 
   for(int counter = 0; counter < total_data_points; counter++){
     std::vector<float> x_temp;
@@ -80,12 +81,14 @@ int main(int argc, char *argv[]) {
 
   float accuracy = 0.1;
   float running_error = 5;
-  int layer = 0;
+  int layer = my_experiment.get_int_param("start");
   std::cout << images.size() << " " << targets.size() << std::endl;
 
   for (int i = 0; i < my_experiment.get_int_param("steps"); i++) {
-    if(i % 50000 == 49999)
+    if(i % my_experiment.get_int_param("freq") == my_experiment.get_int_param("freq") - 1){
       layer++;
+      std::cout << "Increasing layer\n";
+    }
     float error = 0;
     int index = index_sampler(mt);
 //    std::cout << "INdex =  " << index << std::endl;
@@ -105,7 +108,7 @@ int main(int argc, char *argv[]) {
 
       if(row == 27) {
         error = network.backward(y);
-        network.update_parameters();
+        network.update_parameters(layer);
 //        print_vector(network.read_output_values());
 //        print_vector(y);
       }
@@ -130,7 +133,7 @@ int main(int argc, char *argv[]) {
       std::cout << "Accuracy = " << accuracy << std::endl;
 
     }
-    if(i%10000 == 0) {
+    if(i%60000 == 0) {
 //      Evaluate test set
       network.reset_state();
       float correct_predictions = 0;

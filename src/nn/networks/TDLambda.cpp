@@ -2,8 +2,6 @@
 // Created by Khurram Javed on 2022-01-17.
 //
 
-
-#include <execution>
 #include <algorithm>
 #include <iostream>
 #include "../../../include/nn/networks/td_lambda.h"
@@ -18,6 +16,7 @@ TDLambda::TDLambda(float step_size,
   this->layer_size = layer_size;
   this->step_size = step_size;
   this->mt.seed(seed);
+  std::mt19937 second_mt(seed);
   std::uniform_real_distribution<float> weight_sampler(-0.1, 0.1);
   std::uniform_real_distribution<float> prob_sampler(0, 1);
   std::uniform_int_distribution<int> index_sampler(0, no_of_input_features + total_recurrent_features - 1);
@@ -37,14 +36,14 @@ TDLambda::TDLambda(float step_size,
                      weight_sampler(mt),
                      weight_sampler(mt),
                      weight_sampler(mt));
-    for (int counter = 0; counter < this->input_neurons.size(); counter++) {
-      Neuron *neuron_ref = &this->input_neurons[counter];
-      lstm_neuron.add_synapse(neuron_ref,
-                              weight_sampler(mt),
-                              weight_sampler(mt),
-                              weight_sampler(mt),
-                              weight_sampler(mt));
-    }
+//    for (int counter = 0; counter < this->input_neurons.size(); counter++) {
+//      Neuron *neuron_ref = &this->input_neurons[counter];
+//      lstm_neuron.add_synapse(neuron_ref,
+//                              weight_sampler(mt),
+//                              weight_sampler(mt),
+//                              weight_sampler(mt),
+//                              weight_sampler(mt));
+//    }
     indexes_lstm_cells.push_back(i);
     this->LSTM_neurons.push_back(lstm_neuron);
   }
@@ -53,8 +52,11 @@ TDLambda::TDLambda(float step_size,
     int layer_no = counter / layer_size;
     int incoming_features = 0;
     std::vector<int> map_index(no_of_input_features + total_recurrent_features, 0);
+    int counter_temp_temp = 0;
     while (incoming_features < no_of_input_features) {
-      int index = index_sampler(mt);
+//    while (counter_temp_temp < 4000) {
+      counter_temp_temp++;
+      int index = index_sampler(second_mt);
       if (map_index[index] == 0) {
         map_index[index] = 1;
         if (index < no_of_input_features) {
@@ -83,6 +85,12 @@ TDLambda::TDLambda(float step_size,
       }
     }
   }
+//  for(int counter = 0; counter < this->LSTM_neurons.size(); counter++){
+//    for(int inner_counter = 0; inner_counter < this->LSTM_neurons[counter].incoming_neurons.size(); inner_counter++){
+//      std::cout << this->LSTM_neurons[counter].incoming_neurons[inner_counter]->id << "\tto\t" << this->LSTM_neurons[counter].id << std::endl;
+//    }
+//  }
+//  exit(1);
 
   predictions = 0;
   bias = 0;
@@ -93,7 +101,6 @@ TDLambda::TDLambda(float step_size,
 
   }
 }
-
 
 float TDLambda::forward(std::vector<float> inputs) {
 //  Set input neurons value
@@ -122,7 +129,6 @@ float TDLambda::forward(std::vector<float> inputs) {
   predictions += bias;
   return predictions;
 }
-
 
 float TDLambda::get_target_without_sideeffects(std::vector<float> inputs) {
 //  Backup old values
@@ -158,7 +164,6 @@ void TDLambda::reset_state() {
     LSTM_neurons[i].reset_state();
   }
 }
-
 
 void TDLambda::zero_grad() {
   for (int counter = 0; counter < LSTM_neurons.size(); counter++) {
@@ -204,8 +209,19 @@ void TDLambda::backward() {
 
 void TDLambda::update_parameters(int layer, float error) {
 
+//  for(int index = 0; index < LSTM_neurons.size(); index++){
+//    if(layer * layer_size > index){
+//      if(LSTM_neurons[index].frozen == false) {
+//        std::cout << "Freezing neuron with ID " << index << std::endl;
+//        std::cout << "Mean = " << LSTM_neurons[index].running_mean << " Var " << std::sqrt(LSTM_neurons[index].running_variance) << std::endl;
+//        LSTM_neurons[index].frozen = true;
+//        prediction_weights[index] = prediction_weights[index]*LSTM_neurons[index].running_variance;
+//      }
+//    }
+//  }
   for (int index = 0; index < LSTM_neurons.size(); index++) {
-    if (index <= (layer + 1) * layer_size)
+    if ((layer) * layer_size <= index && index < (layer + 1) * layer_size)
+//      std::cout << "Training neuron = " << index << std::endl;
       LSTM_neurons[index].update_weights(step_size, error);
   }
 
@@ -213,6 +229,43 @@ void TDLambda::update_parameters(int layer, float error) {
     if (index < (layer + 1) * layer_size) {
       prediction_weights[index] += prediction_weights_gradient[index] * error * step_size;
     }
+  }
+
+  bias += error * step_size * bias_gradients;
+
+}
+std::vector<float> TDLambda::real_all_running_mean() {
+  std::vector<float> output_val;
+  output_val.reserve(this->input_neurons.size() + this->LSTM_neurons.size());
+//  Store input values
+  for (auto n : this->input_neurons)
+    output_val.push_back(n.running_mean);
+//  Store other values
+  for (auto n : this->LSTM_neurons)
+    output_val.push_back(n.running_mean);
+  return output_val;
+}
+
+std::vector<float> TDLambda::read_all_running_variance() {
+  std::vector<float> output_val;
+  output_val.reserve(this->input_neurons.size() + this->LSTM_neurons.size());
+//  Store input values
+  for (auto n : this->input_neurons)
+    output_val.push_back(n.running_variance);
+//  Store other values
+  for (auto n : this->LSTM_neurons)
+    output_val.push_back(n.running_variance);
+  return output_val;
+}
+
+void TDLambda::update_parameters_no_freeze(float error) {
+
+  for (int index = 0; index < LSTM_neurons.size(); index++) {
+    LSTM_neurons[index].update_weights(step_size, error);
+  }
+
+  for (int index = 0; index < LSTM_neurons.size(); index++) {
+    prediction_weights[index] += prediction_weights_gradient[index] * error * step_size;
   }
 
   bias += error * step_size * bias_gradients;

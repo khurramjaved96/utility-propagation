@@ -78,16 +78,18 @@ void LSTM::print_gradients() {
 }
 
 void LSTM::fire() {
+
   this->value = h;
   this->neuron_age++;
-//  std::cout << "No need to call fire for LSTM\n";
+  update_statistics();
+
 }
 
 void LSTM::compute_gradient_of_all_synapses() {
-  std::vector<float> x;
-  for (auto &it: this->incoming_neurons) {
-    x.push_back(it->value);
-  }
+  std::vector<float> x = get_normalized_values();
+//  for (auto &it: this->incoming_neurons) {
+//    x.push_back(it->value);
+//  }
 
   int n = this->incoming_neurons.size();
 
@@ -297,7 +299,42 @@ void LSTM::accumulate_gradient(float incoming_grad) {
   Gu_g += Hu_g * incoming_grad;
 };
 
+void LSTM::decay_gradient(float decay_rate) {
+  int n = this->w_f.size();
+  for (int counter = 0; counter < n; counter++) {
+    Gw_f[counter] *= decay_rate;
+    Gw_i[counter] *= decay_rate;
+    Gw_o[counter] *= decay_rate;
+    Gw_g[counter] *= decay_rate;
+  }
+  Gb_f *= decay_rate;
+  Gb_i *= decay_rate;
+  Gb_o *= decay_rate;
+  Gb_g *= decay_rate;
+  Gu_f *= decay_rate;
+  Gu_i *= decay_rate;
+  Gu_o *= decay_rate;
+  Gu_g *= decay_rate;
+}
 
+void LSTM::update_weights(float step_size, float error) {
+  int n = this->w_f.size();
+  for (int counter = 0; counter < n; counter++) {
+    w_f[counter] += Gw_f[counter] * step_size * error;
+    w_i[counter] += Gw_i[counter] * step_size * error;
+    w_o[counter] += Gw_o[counter] * step_size * error;
+    w_g[counter] += Gw_g[counter] * step_size * error;
+  }
+
+  b_f += Gb_f * step_size * error;
+  b_i += Gb_i * step_size * error;
+  b_o += Gb_o * step_size * error;
+  b_g += Gb_g * step_size * error;
+  u_f += Gu_f * step_size * error;
+  u_i += Gu_i * step_size * error;
+  u_o += Gu_o * step_size * error;
+  u_g += Gu_g * step_size * error;
+}
 void LSTM::update_weights(float step_size) {
   int n = this->w_f.size();
   for (int counter = 0; counter < n; counter++) {
@@ -317,6 +354,53 @@ void LSTM::update_weights(float step_size) {
   u_g += Gu_g * step_size;
 }
 
+float LSTM::get_value_without_sideeffects(){
+
+  float i_val_t, g_t, f_t, o_t;
+  float old_h_t, old_c_t;
+
+  old_h_t = h;
+  old_c_t = c;
+
+  i_val_t = b_i;
+  g_t = b_g;
+  f_t = b_f;
+  o_t = b_o;
+
+//  Non-bias terms connections except the self connection
+//  for (auto &it: this->incoming_synapses) {
+//    std::cout << it->input_neuron->value << std::endl;
+//  }
+//  exit(0);
+  auto x = get_normalized_values();
+  for (int counter_t = 0; counter_t < x.size(); counter_t++) {
+//    std::cout << w_i[counter] << "*" << it->input_neuron->value << std::endl;
+//    std::cout << "ID " << it->id <<  " it->value = " << it->value << std::endl;
+    i_val_t += this->w_i[counter_t] * x[counter_t];
+    f_t += this->w_f[counter_t] * x[counter_t];
+    g_t += this->w_g[counter_t] * x[counter_t];
+    o_t += this->w_o[counter_t] * x[counter_t];
+  }
+
+//  Self connection
+  i_val_t += u_i * old_h_t;
+  g_t += u_g * old_h_t;
+  f_t += u_f * old_h_t;
+  o_t += u_o * old_h_t;
+
+
+//  Applying non-linear transformations and updating the hidden state;
+  i_val_t = sigmoid(i_val_t);
+  f_t = sigmoid(f_t);
+  o_t = sigmoid(o_t);
+  g_t = tanh(g_t);
+
+
+  float c_t = f_t * old_c_t + i_val_t * g_t;
+  float h_t = o_t * tanh(c_t);
+  return h_t;
+}
+
 void LSTM::update_value_sync() {
   this->value_before_firing = 0;
   old_h = h;
@@ -327,20 +411,20 @@ void LSTM::update_value_sync() {
   f = b_f;
   o = b_o;
 
-  int counter = 0;
+
 //  Non-bias terms connections except the self connection
 //  for (auto &it: this->incoming_synapses) {
 //    std::cout << it->input_neuron->value << std::endl;
 //  }
 //  exit(0);
-  for (auto &it: this->incoming_neurons) {
+  auto x = get_normalized_values();
+  for (int counter = 0; counter < x.size(); counter++) {
 //    std::cout << w_i[counter] << "*" << it->input_neuron->value << std::endl;
 //    std::cout << "ID " << it->id <<  " it->value = " << it->value << std::endl;
-    i_val += this->w_i[counter] * it->value;
-    f += this->w_f[counter] * it->value;
-    g += this->w_g[counter] * it->value;
-    o += this->w_o[counter] * it->value;
-    counter++;
+    i_val += this->w_i[counter] * x[counter];
+    f += this->w_f[counter] * x[counter];
+    g += this->w_g[counter] * x[counter];
+    o += this->w_o[counter] * x[counter];
   }
 
 //  Self connection
@@ -373,20 +457,21 @@ void LSTM::update_value() {
   f = b_f;
   o = b_o;
 
-  int counter = 0;
+
 //  Non-bias terms connections except the self connection
 //  for (auto &it: this->incoming_synapses) {
 //    std::cout << it->input_neuron->value << std::endl;
 //  }
 //  exit(0);
-  for (auto &it: this->incoming_neurons) {
+  auto x = get_normalized_values();
+  for (int counter = 0; counter < x.size(); counter++) {
 //    std::cout << w_i[counter] << "*" << it->input_neuron->value << std::endl;
 //    std::cout << "ID " << it->id <<  " it->value = " << it->value << std::endl;
-    i_val += this->w_i[counter] * it->value;
-    f += this->w_f[counter] * it->value;
-    g += this->w_g[counter] * it->value;
-    o += this->w_o[counter] * it->value;
-    counter++;
+    i_val += this->w_i[counter] * x[counter];
+    f += this->w_f[counter] * x[counter];
+    g += this->w_g[counter] * x[counter];
+    o += this->w_o[counter] * x[counter];
+
   }
 
 //  Self connection
@@ -418,12 +503,30 @@ float LSTM::get_hidden_state() {
   return this->h;
 }
 
+std::vector<float> LSTM::get_normalized_values() {
+  std::vector<float> values_ret;
+  values_ret.reserve(this->incoming_neurons.size());
+  for(int counter = 0; counter < this->incoming_neurons.size(); counter++){
+    values_ret.push_back((this->incoming_neurons[counter]->value - this->input_means[counter])/sqrt(input_std[counter]));
+  }
+  return values_ret;
+}
+void LSTM::update_statistics() {
+  for(int counter = 0; counter < this->incoming_neurons.size(); counter++){
+      float val = this->incoming_neurons[counter]->value;
+      this->input_means[counter] = this->input_means[counter]*0.9999 + 0.0001*val;
+      this->input_std[counter] = this->input_std[counter]*0.9999 + 0.0001*(val - this->input_means[counter])*(val - this->input_means[counter]);
+  }
+}
+
 void LSTM::add_synapse(Neuron *s, float w_i, float w_f, float w_g, float w_o) {
   this->incoming_neurons.push_back(s);
   this->w_i.push_back(w_i);
   this->w_f.push_back(w_f);
   this->w_g.push_back(w_g);
   this->w_o.push_back(w_o);
+  this->input_means.push_back(0);
+  this->input_std.push_back(1);
 
   this->Hw_i.push_back(0);
   this->Hw_f.push_back(0);

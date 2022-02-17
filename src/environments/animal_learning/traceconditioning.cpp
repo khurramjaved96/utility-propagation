@@ -8,9 +8,8 @@
 #include <vector>
 #include "../../../include/environments/animal_learning/tracecondioning.h"
 
-TraceConditioning::TraceConditioning(std::pair<int, int> ISI, std::pair<int, int> ISI_long, std::pair<int, int> ITI,
+TraceConditioning::TraceConditioning(std::pair<int, int> ISI, std::pair<int, int> ITI,
                                      int num_distractors, int seed) : ISI_sampler(ISI.first, ISI.second),
-                                                                      ISI_long_sampler(ISI_long.first, ISI_long.second),
                                                                       ITI_sampler(ITI.first, ITI.second), mt(seed),
                                                                       NoiseSampler(0, 1) {
   this->num_distractors = num_distractors;
