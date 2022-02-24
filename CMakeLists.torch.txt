@@ -1,0 +1,17 @@
+cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
+project(tbptt-torch)
+
+find_package(Torch REQUIRED)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+
+add_executable(tbptt-torch include/experiment/Experiment.h src/experiment/Experiment.cpp include/experiment/Database.h
+        src/experiment/Database.cpp include/experiment/Metric.h src/experiment/Metric.cpp include/nn/synapse.h
+        include/nn/message.h include/nn/dynamic_elem.h include/nn/utils.h
+        src/nn/utils.cpp src/nn/dynamic_elem.cpp
+        src/nn/utils.cpp src/utils.cpp include/utils.h src/nn/message.cpp
+        src/nn/networks/torch_LSTM.cpp
+        experiment_mnist_binary_tbptt.cpp)
+target_link_libraries(tbptt-torch PUBLIC tbb)
+target_link_libraries(tbptt-torch PUBLIC mariadb)
+target_link_libraries(tbptt-torch PUBLIC "${TORCH_LIBRARIES}")
+set_property(TARGET tbptt-torch PROPERTY CXX_STANDARD 14)
