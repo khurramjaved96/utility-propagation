@@ -2,6 +2,7 @@
 #include <math.h>
 #include <cmath>
 #include <vector>
+#include <chrono>
 
 #include <algorithm>
 #include <random>
@@ -82,6 +83,7 @@ int main(int argc, char *argv[]) {
   std::vector<float> row_x;
   torch::Tensor row_x_tensor, old_row_x_tensor;
   for (int i = 0; i < my_experiment.get_int_param("steps"); i++) {
+    auto start = std::chrono::steady_clock::now();
 
     int index = index_sampler(mt);
     auto x = images[index];
@@ -107,11 +109,13 @@ int main(int argc, char *argv[]) {
       row_x_tensor = torch::from_blob(row_x.data(), {row_x.size()}, torch::kF32).clone();
 
       if (list_of_observations.size() == my_experiment.get_int_param("truncation")){
+        //std::cout << list_of_observations[0].view({1,1,-1}) << std::endl;
         auto x = list_of_observations[0].view({1,1,-1});
         std::tie(pred, state) = network->forward(x, state);
         state_temp = state; //TODO verify that it is copy by value
         list_of_observations.erase(list_of_observations.begin()); //pop(0)
-        x = torch::stack(list_of_observations).squeeze(/*dim=*/1);
+        //std::cout << torch::stack(list_of_observations).unsqueeze(1) << std::endl;
+        x = torch::stack(list_of_observations).unsqueeze(/*dim=*/1); //unsqueeze instead of python ver's squeeze since list is different
         auto batch_pred = torch::zeros({my_experiment.get_int_param("truncation")},
                                        torch::dtype(torch::kFloat32).requires_grad(true));
         std::tie(batch_pred, state_temp) = network->forward(x, state_temp);
@@ -123,7 +127,8 @@ int main(int argc, char *argv[]) {
           torch::NoGradGuard no_grad;
           auto n_clone = network->clone();
           std::shared_ptr<LSTM> n_copy = std::dynamic_pointer_cast<LSTM>(n_clone);
-          std::tie(next_pred, state_ignore_var) = n_copy->forward(row_x_tensor.detach(), state_temp); //no need for detach here I think
+          //std::cout << row_x_tensor.detach() << std::endl;
+          std::tie(next_pred, state_ignore_var) = n_copy->forward(row_x_tensor.detach().view({1,1,-1}), state_temp); //no need for detach here I think
         }
         torch::Tensor target = torch::zeros({1});
         if (row == 27)
@@ -144,10 +149,16 @@ int main(int argc, char *argv[]) {
         opti.step();
         state = std::make_tuple(std::get<0>(state).detach(), std::get<1>(state).detach());
       }
-    if(i % 1000 == 0){
+    }
+    if(i % 100 == 0){
       std::cout << "Step = " << i << std::endl;
       std::cout << "Error= " << running_error << std::endl;
+      auto end = std::chrono::steady_clock::now();
+      std::cout << "Elapsed time in milliseconds for per steps: "
+                << 1000000 / (1+(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() /
+                              my_experiment.get_int_param("steps")))
+                << " fps" << std::endl;
+
     }
   }
-}
 }
