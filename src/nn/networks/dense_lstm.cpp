@@ -14,6 +14,7 @@
 #include "../../../include/nn/networks/dense_lstm.h"
 #include "../../../include/utils.h"
 #include "../../../include/nn/utils.h"
+#include <random>
 
 DenseLSTM::DenseLSTM(float step_size,
                      int seed,
@@ -22,6 +23,7 @@ DenseLSTM::DenseLSTM(float step_size,
                      int truncation,
                      float init_range) : mt(seed) {
   this->time_step = 1;
+  this->step_size = step_size;
   this->input_size = no_of_input_features;
   this->hidden_state_size = hidden_size;
   this->truncation = truncation;
