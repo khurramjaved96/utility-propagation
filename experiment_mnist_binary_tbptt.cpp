@@ -82,8 +82,8 @@ int main(int argc, char *argv[]) {
   int global_step = 0;
   std::vector<float> row_x;
   torch::Tensor row_x_tensor, old_row_x_tensor;
+  auto start = std::chrono::steady_clock::now();
   for (int i = 0; i < my_experiment.get_int_param("steps"); i++) {
-    auto start = std::chrono::steady_clock::now();
 
     int index = index_sampler(mt);
     auto x = images[index];
@@ -155,9 +155,16 @@ int main(int argc, char *argv[]) {
       std::cout << "Error= " << running_error << std::endl;
       auto end = std::chrono::steady_clock::now();
       std::cout << "Elapsed time in milliseconds for per steps: "
+                << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
+                << " ms" << std::endl;
+      std::cout << "Elapsed time in milliseconds for per steps: "
+                << std::chrono::duration_cast<std::chrono::duration<double>>(end- start).count()
+                << " seconds" << std::endl;
+      std::cout << "Elapsed time in milliseconds for per steps: "
                 << 1000000 / (1+(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() /
                               my_experiment.get_int_param("steps")))
                 << " fps" << std::endl;
+      start = std::chrono::steady_clock::now();
 
     }
   }
