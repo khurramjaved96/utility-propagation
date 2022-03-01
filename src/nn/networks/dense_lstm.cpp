@@ -20,8 +20,6 @@ DenseLSTM::DenseLSTM(float step_size,
                      int hidden_size,
                      int no_of_input_features,
                      int truncation,
-                     int total_targets,
-                     int total_recurrent_features,
                      float init_range) : mt(seed) {
   this->time_step = 1;
   this->input_size = no_of_input_features;
@@ -30,7 +28,7 @@ DenseLSTM::DenseLSTM(float step_size,
   int t = time_step % truncation;
   for (int counter = 0; counter < truncation; counter++) {
     std::vector<float> f_temp(hidden_size, 0), g_temp(hidden_size, 0), o_temp(hidden_size, 0), i_temp(hidden_size, 0),
-        c_temp(hidden_size, 1), h_temp(hidden_size, 1);
+        c_temp(hidden_size, 0), h_temp(hidden_size, 0);
     std::vector<float> x_temp(input_size, 0);
     x_queue.push_back(x_temp);
     f_queue.push_back(f_temp);
@@ -40,8 +38,10 @@ DenseLSTM::DenseLSTM(float step_size,
     c_queue.push_back(c_temp);
     h_queue.push_back(h_temp);
   }
-  for (int counter = 0; counter < hidden_size; counter++)
-    this->prediction_weights.push_back(0.5);
+  for (int counter = 0; counter < hidden_size; counter++) {
+    this->prediction_weights.push_back(0.1);
+    this->prediction_weights_grad.push_back(0);
+  }
 
   std::uniform_int_distribution<float> weight_sampler(-100, 100);
   for (int outer_counter = 0; outer_counter < hidden_size; outer_counter++) {
@@ -65,6 +65,102 @@ DenseLSTM::DenseLSTM(float step_size,
   }
 
 }
+
+float DenseLSTM::get_target_without_sideeffects(std::vector<float> inputs) {
+  //  f->g->i->o
+//  compute f, g, i and o for each recurrent neuron
+  std::vector<float> f_temp, g_temp, i_temp, o_temp;
+  f_temp.reserve(this->hidden_state_size);
+  g_temp.reserve(this->hidden_state_size);
+  i_temp.reserve(this->hidden_state_size);
+  o_temp.reserve(this->hidden_state_size);
+  int t = this->time_step % truncation;
+  int t_1 = (this->time_step - 1) % truncation;
+  if (t_1 < 0)
+    t_1 = truncation + t_1;
+
+  float f_temp_cur, g_temp_cur, i_temp_cur, o_temp_cur;
+  f_temp_cur = g_temp_cur = i_temp_cur = o_temp_cur = 0;
+
+
+// compute i
+  for (int h_index = 0; h_index < this->hidden_state_size; h_index++) {
+    i_temp_cur = 0;
+    for (int inp_index = 0; inp_index < this->input_size; inp_index++) {
+      i_temp_cur += W[0 * this->input_size * hidden_state_size + h_index * input_size + inp_index] * inputs[inp_index];
+//      std::cout << "W_i weights " << "h_index " << h_index << " inp index " << inp_index << " " << W[0 * this->input_size*hidden_state_size + h_index*input_size + inp_index] << std::endl;
+    }
+    for (int old_h_index = 0; old_h_index < this->hidden_state_size; old_h_index++) {
+      i_temp_cur += U[0 * this->hidden_state_size * hidden_state_size + h_index * hidden_state_size + old_h_index]
+          * h_queue[t_1][old_h_index];
+    }
+    i_temp_cur += b[0 * hidden_state_size + h_index];
+    i_temp_cur = sigmoid(i_temp_cur);
+    i_temp.push_back(i_temp_cur);
+  }
+
+// compute f
+  for (int h_index = 0; h_index < this->hidden_state_size; h_index++) {
+    f_temp_cur = 0;
+    for (int inp_index = 0; inp_index < this->input_size; inp_index++) {
+      f_temp_cur += W[1 * this->input_size * hidden_state_size + h_index * input_size + inp_index] * inputs[inp_index];
+    }
+    for (int old_h_index = 0; old_h_index < this->hidden_state_size; old_h_index++) {
+      f_temp_cur += U[1 * this->hidden_state_size * hidden_state_size + h_index * hidden_state_size + old_h_index]
+          * h_queue[t_1][old_h_index];
+    }
+
+    f_temp_cur += b[1 * hidden_state_size + h_index];
+    f_temp_cur = sigmoid(f_temp_cur);
+    f_temp.push_back(f_temp_cur);
+  }
+
+//  Compute g
+  for (int h_index = 0; h_index < this->hidden_state_size; h_index++) {
+    g_temp_cur = 0;
+    for (int inp_index = 0; inp_index < this->input_size; inp_index++) {
+      g_temp_cur += W[2 * this->input_size * hidden_state_size + h_index * input_size + inp_index] * inputs[inp_index];
+    }
+    for (int old_h_index = 0; old_h_index < this->hidden_state_size; old_h_index++) {
+      g_temp_cur += U[2 * this->hidden_state_size * hidden_state_size + h_index * hidden_state_size + old_h_index]
+          * h_queue[t_1][old_h_index];
+    }
+    g_temp_cur += b[2 * hidden_state_size + h_index];
+    g_temp_cur = tanh(g_temp_cur);
+    g_temp.push_back(g_temp_cur);
+  }
+
+
+//  Compute o
+  for (int h_index = 0; h_index < this->hidden_state_size; h_index++) {
+    o_temp_cur = 0;
+    for (int inp_index = 0; inp_index < this->input_size; inp_index++) {
+//      std::cout << "O weigjt = " << W[h_index][3 * this->input_size + inp_index] << std::endl;
+      o_temp_cur += W[3 * this->input_size * hidden_state_size + h_index * input_size + inp_index] * inputs[inp_index];
+    }
+    for (int old_h_index = 0; old_h_index < this->hidden_state_size; old_h_index++) {
+      o_temp_cur += U[3 * this->hidden_state_size * hidden_state_size + h_index * hidden_state_size + old_h_index]
+          * h_queue[t_1][old_h_index];
+    }
+    o_temp_cur += b[3 * hidden_state_size + h_index];
+    o_temp_cur = sigmoid(o_temp_cur);
+    o_temp.push_back(o_temp_cur);
+  }
+
+  std::vector<float> c_temp(hidden_state_size, 0);
+  std::vector<float> h_temp(hidden_state_size, 0);
+  for (int h_index = 0; h_index < this->hidden_state_size; h_index++) {
+    c_temp[h_index] = f_temp[h_index] * c_queue[t_1][h_index] + i_temp[h_index] * g_temp[h_index];
+    h_temp[h_index] = o_temp[h_index] * tanh(c_temp[h_index]);
+  }
+
+  float prediction_temp = 0;
+  for (int counter = 0; counter < prediction_weights.size(); counter++) {
+    prediction_temp += h_queue[t][counter] * prediction_weights[counter];
+  }
+  return prediction_temp;
+}
+
 float DenseLSTM::forward(std::vector<float> inputs) {
 //  f->g->i->o
 //  compute f, g, i and o for each recurrent neuron
@@ -166,36 +262,34 @@ float DenseLSTM::forward(std::vector<float> inputs) {
   return prediction_temp;
 }
 
-float DenseLSTM::backward() {
-//  Things to compute
-// dy/dW
-// dy/dU
-// dy/dh-1
+void DenseLSTM::backward() {
 
-//dy/dho_queue[t_1][h_index]
+//  For the last step, only gradient from the prediction flows backwards
   std::vector<std::vector<float>> initial_grad;
   initial_grad.push_back(this->prediction_weights);
   std::vector<float> c_inital(this->prediction_weights.size(), 0);
   initial_grad.push_back(c_inital);
+
+//  Gradient for the linear predictor weightss
+  int t = (this->time_step - 1) % truncation;
+  auto h_cur = h_queue[t];
+  for (int counter = 0; counter < h_cur.size(); counter++) {
+    this->prediction_weights_grad[counter] += h_cur[counter];
+  }
+
+//  BPTT for k = this->truncation
   std::vector<std::vector<float>> grad_state = initial_grad;
-  for(int counter = 0; counter < 10; counter++){
-    int t = (this->time_step - counter - 1) % truncation;
-    std::cout << "Time = " << t << std::endl;
-    if(t < 0)
+  for (int counter = 0; counter < truncation; counter++) {
+    t = (this->time_step - counter - 1) % truncation;
+    if (t < 0)
       t += truncation;
     grad_state = this->backward_with_future_grad(grad_state, t);
   }
-  return 0;
 }
 
+std::vector<std::vector<float>> DenseLSTM::backward_with_future_grad(std::vector<std::vector<float>> grad_prev_combined,
+                                                                     int time) {
 
-std::vector<std::vector<float>> DenseLSTM::backward_with_future_grad(std::vector<std::vector<float>> grad_prev_combined, int time) {
-//  Things to compute
-// dy/dW
-// dy/dU
-// dy/dh-1
-
-//dy/dho_queue[t_1][h_index]
   auto grad_f = grad_prev_combined[0];
   auto grad_c = grad_prev_combined[1];
   std::vector<float> grad_h_new(hidden_state_size, 0);
@@ -232,11 +326,10 @@ std::vector<std::vector<float>> DenseLSTM::backward_with_future_grad(std::vector
     float g_t_i_t_1_i_t = g_t * i_t * (1 - i_t);
     float c_t_1_f_t_1_f_t = c_t_1 * f_t * (1 - f_t);
 
-    float grad_i_base = (previous_grad * tanh_c_t_grad_o_t + previous_c_grad) * g_t_i_t_1_i_t ;
+    float grad_i_base = (previous_grad * tanh_c_t_grad_o_t + previous_c_grad) * g_t_i_t_1_i_t;
     float grad_f_base = (previous_grad * tanh_c_t_grad_o_t + previous_c_grad) * c_t_1_f_t_1_f_t;
     float grad_g_base = (previous_grad * tanh_c_t_grad_o_t + previous_c_grad) * i_t * (1 - g_t * g_t);
-    float grad_o_base = previous_grad*tanh(c_t) * o_t * (1 - o_t);
-
+    float grad_o_base = previous_grad * tanh(c_t) * o_t * (1 - o_t);
 
     for (int i = 0; i < input_size; i++) {
       float x_t = x_queue[t_1][i];
@@ -256,21 +349,29 @@ std::vector<std::vector<float>> DenseLSTM::backward_with_future_grad(std::vector
     for (int i = 0; i < hidden_state_size; i++) {
       float hidden_t_1 = h_1[i];
 //      Grad for Ui_t
-      U_grad[0 * this->hidden_state_size * hidden_state_size + h_index * hidden_state_size + i] += grad_i_base*hidden_t_1;
+      U_grad[0 * this->hidden_state_size * hidden_state_size + h_index * hidden_state_size + i] +=
+          grad_i_base * hidden_t_1;
 
 //      Grad for Uf_t
-      U_grad[1 * this->hidden_state_size * hidden_state_size + h_index * hidden_state_size + i] += grad_f_base*hidden_t_1;
+      U_grad[1 * this->hidden_state_size * hidden_state_size + h_index * hidden_state_size + i] +=
+          grad_f_base * hidden_t_1;
 
 //      Grad for Ug_t
-      U_grad[2 * this->hidden_state_size * hidden_state_size + h_index * hidden_state_size + i] += grad_g_base*hidden_t_1;
+      U_grad[2 * this->hidden_state_size * hidden_state_size + h_index * hidden_state_size + i] +=
+          grad_g_base * hidden_t_1;
 
 //    Grad for Uo_t
-      U_grad[3 * this->hidden_state_size * hidden_state_size + h_index * hidden_state_size + i] += grad_o_base*hidden_t_1;
+      U_grad[3 * this->hidden_state_size * hidden_state_size + h_index * hidden_state_size + i] +=
+          grad_o_base * hidden_t_1;
 
-      grad_h_new[i] += grad_i_base*U[0 * this->hidden_state_size * hidden_state_size + h_index * hidden_state_size + i];
-      grad_h_new[i] += grad_f_base*U[1 * this->hidden_state_size * hidden_state_size + h_index * hidden_state_size + i];
-      grad_h_new[i] += grad_g_base*U[2 * this->hidden_state_size * hidden_state_size + h_index * hidden_state_size + i];
-      grad_h_new[i] += grad_o_base*U[3 * this->hidden_state_size * hidden_state_size + h_index * hidden_state_size + i];
+      grad_h_new[i] +=
+          grad_i_base * U[0 * this->hidden_state_size * hidden_state_size + h_index * hidden_state_size + i];
+      grad_h_new[i] +=
+          grad_f_base * U[1 * this->hidden_state_size * hidden_state_size + h_index * hidden_state_size + i];
+      grad_h_new[i] +=
+          grad_g_base * U[2 * this->hidden_state_size * hidden_state_size + h_index * hidden_state_size + i];
+      grad_h_new[i] +=
+          grad_o_base * U[3 * this->hidden_state_size * hidden_state_size + h_index * hidden_state_size + i];
     }
 
     grad_c_new[h_index] += (previous_grad * tanh_c_t_grad_o_t + previous_c_grad) * f_t;
@@ -292,7 +393,7 @@ std::vector<std::vector<float>> DenseLSTM::backward_with_future_grad(std::vector
   return_vec.push_back(grad_h_new);
   return_vec.push_back(grad_c_new);
 //  std::cout << "grad w.r.t to H is\n";
-  print_vector(grad_h_new);
+//  print_vector(grad_h_new);
   return return_vec;
 }
 std::vector<float> DenseLSTM::get_state() {
@@ -305,4 +406,26 @@ std::vector<float> DenseLSTM::get_state() {
   for (int i = 0; i < c_queue[t_1].size(); i++)
     state_val.push_back(c_queue[t_1][i]);
   return state_val;
+}
+
+void DenseLSTM::decay_gradient(float decay_rate) {
+  for (int counter = 0; counter < this->prediction_weights_grad.size(); counter++)
+    this->prediction_weights_grad[counter] *= decay_rate;
+  for (int counter = 0; counter < W_grad.size(); counter++)
+    W_grad[counter] *= decay_rate;
+  for (int counter = 0; counter < U_grad.size(); counter++)
+    U_grad[counter] *= decay_rate;
+  for (int counter = 0; counter < b_grad.size(); counter++)
+    b_grad[counter] *= decay_rate;
+}
+
+void DenseLSTM::update_parameters(float error) {
+  for (int counter = 0; counter < this->prediction_weights_grad.size(); counter++)
+    this->prediction_weights[counter] += this->prediction_weights_grad[counter] * error * step_size;
+  for (int counter = 0; counter < W_grad.size(); counter++)
+    W[counter] += step_size * error * W_grad[counter];
+  for (int counter = 0; counter < U_grad.size(); counter++)
+    U[counter] += step_size * error * U_grad[counter];
+  for (int counter = 0; counter < b_grad.size(); counter++)
+    b[counter] += step_size * error * b_grad[counter];
 }

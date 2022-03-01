@@ -5,7 +5,6 @@
 #ifndef INCLUDE_NN_NETWORKS_DENSE_LSTM_H_
 #define INCLUDE_NN_NETWORKS_DENSE_LSTM_H_
 
-
 #include <vector>
 #include <queue>
 #include <map>
@@ -28,10 +27,8 @@ class DenseLSTM {
   int truncation;
   int input_size;
   int hidden_state_size;
-  std::vector<float> predictions;
   std::vector<float> prediction_weights;
-  std::vector<float> bias;
-  std::vector<float> errors;
+  std::vector<float> prediction_weights_grad;
 
   std::vector<std::vector<float>> x_queue;
   std::vector<std::vector<float>> h_queue;
@@ -41,15 +38,14 @@ class DenseLSTM {
   std::vector<std::vector<float>> f_queue;
   std::vector<std::vector<float>> o_queue;
 
-  std::vector<float> h;
-  std::vector<float> c;
-
   std::vector<float> W;
   std::vector<float> W_grad;
   std::vector<float> U;
   std::vector<float> U_grad;
   std::vector<float> b;
   std::vector<float> b_grad;
+
+  float  get_target_without_sideeffects(std::vector<float> inputs);
 
   std::vector<LinearNeuron> input_neurons;
 
@@ -62,8 +58,6 @@ class DenseLSTM {
             int hidden_size,
             int no_of_input_features,
             int truncation,
-            int total_targets,
-            int total_recurrent_features,
             float init_range);
 
   void zero_grad();
@@ -72,11 +66,11 @@ class DenseLSTM {
 
   float forward(std::vector<float> inputs);
 
-  float backward();
+  void backward();
 
   std::vector<std::vector<float>> backward_with_future_grad(std::vector<std::vector<float>> grad_f, int time);
 
-  void update_parameters();
+  void update_parameters(float error);
 
   void reset_state();
 

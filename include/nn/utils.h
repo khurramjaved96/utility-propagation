@@ -17,6 +17,8 @@ float sigmoid(float a);
 
 float relu(float a);
 
+float tanh_m(float a);
+
 template<class mytype>
 mytype max(std::vector<mytype> values);
 
