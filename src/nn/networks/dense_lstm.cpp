@@ -14,6 +14,7 @@
 #include "../../../include/nn/networks/dense_lstm.h"
 #include "../../../include/utils.h"
 #include "../../../include/nn/utils.h"
+#include <random>
 
 DenseLSTM::DenseLSTM(float step_size,
                      int seed,
@@ -22,6 +23,7 @@ DenseLSTM::DenseLSTM(float step_size,
                      int truncation,
                      float init_range) : mt(seed) {
   this->time_step = 1;
+  this->step_size = step_size;
   this->input_size = no_of_input_features;
   this->hidden_state_size = hidden_size;
   this->truncation = truncation;
@@ -418,6 +420,19 @@ void DenseLSTM::decay_gradient(float decay_rate) {
   for (int counter = 0; counter < b_grad.size(); counter++)
     b_grad[counter] *= decay_rate;
 }
+
+
+void DenseLSTM::zero_grad() {
+  for (int counter = 0; counter < this->prediction_weights_grad.size(); counter++)
+    this->prediction_weights_grad[counter] = 0;
+  for (int counter = 0; counter < W_grad.size(); counter++)
+    W_grad[counter] = 0;
+  for (int counter = 0; counter < U_grad.size(); counter++)
+    U_grad[counter]  = 0;
+  for (int counter = 0; counter < b_grad.size(); counter++)
+    b_grad[counter] = 0;
+}
+
 
 void DenseLSTM::update_parameters(float error) {
   for (int counter = 0; counter < this->prediction_weights_grad.size(); counter++)

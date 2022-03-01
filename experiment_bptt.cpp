@@ -40,8 +40,9 @@ int main(int argc, char *argv[]) {
     float real_target = env.get_target(gamma);
 
     x = env.step();
-    float target = env.get_US() + gamma * network.get_target_without_sideeffects(x);
-
+//    float target = env.get_US() + gamma * network.get_target_without_sideeffects(x);
+    float target = 10;
+    real_target = 10;
     float error = target - pred;
 //    float se = error*error;
     float real_error = (real_target - pred) * (real_target - pred);
