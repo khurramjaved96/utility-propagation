@@ -20,8 +20,7 @@ DenseLSTM::DenseLSTM(float step_size,
                      int seed,
                      int hidden_size,
                      int no_of_input_features,
-                     int truncation,
-                     float init_range) : mt(seed) {
+                     int truncation) : mt(seed) {
   this->time_step = 1;
   this->step_size = step_size;
   this->input_size = no_of_input_features;
@@ -276,6 +275,15 @@ void DenseLSTM::backward() {
   int t = (this->time_step - 1) % truncation;
   auto h_cur = h_queue[t];
   for (int counter = 0; counter < h_cur.size(); counter++) {
+    if(std::isnan(h_cur[counter])){
+      print_vector(h_cur);
+      for(int it = 0; it < truncation; it ++){
+        std::cout << "T = " << it << ": ";
+        print_vector(h_queue[t]);
+      }
+      std::cout << "NAN happening\n";
+      exit(1);
+    }
     this->prediction_weights_grad[counter] += h_cur[counter];
   }
 
