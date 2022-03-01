@@ -39,28 +39,28 @@ DenseLSTM::DenseLSTM(float step_size,
     h_queue.push_back(h_temp);
   }
   for (int counter = 0; counter < hidden_size; counter++) {
-    this->prediction_weights.push_back(0.1);
+    this->prediction_weights.push_back(0);
     this->prediction_weights_grad.push_back(0);
   }
 
-  std::uniform_int_distribution<float> weight_sampler(-100, 100);
+  std::uniform_real_distribution<float> weight_sampler( -sqrt(1.0/float(hidden_size)), sqrt(1.0/float(hidden_size)));
   for (int outer_counter = 0; outer_counter < hidden_size; outer_counter++) {
     std::vector<float> temp_weight_vector;
     for (int inner_counter = 0; inner_counter < input_size * 4; inner_counter++) {
-      this->W.push_back(weight_sampler(this->mt) / 200.0f);
+      this->W.push_back(weight_sampler(this->mt));
       this->W_grad.push_back(0);
     }
   }
   for (int outer_counter = 0; outer_counter < hidden_size; outer_counter++) {
     std::vector<float> temp_weight_vector;
     for (int inner_counter = 0; inner_counter < hidden_size * 4; inner_counter++) {
-      this->U.push_back(weight_sampler(this->mt) / 200.0f);
+      this->U.push_back(weight_sampler(this->mt));
       this->U_grad.push_back(0);
     }
   }
 
   for (int outer_counter = 0; outer_counter < hidden_size * 4; outer_counter++) {
-    this->b.push_back(weight_sampler(this->mt) / 200.0f);
+    this->b.push_back(weight_sampler(this->mt));
     this->b_grad.push_back(0);
   }
 
