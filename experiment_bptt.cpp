@@ -7,6 +7,8 @@
 #include "include/utils.h"
 #include "include/nn/utils.h"
 #include <string>
+#include <cmath>
+#include <chrono>
 
 #include "include/environments/animal_learning/tracecondioning.h"
 
@@ -21,14 +23,15 @@ int main(int argc, char *argv[]) {
 
   auto network = DenseLSTM(1e-3,
                            0,
-                           10,
-                           6 + 5 + 1 + 16,
+                           16,
+                           6+5+1+16,
                            28,
                            1);
 
   std::cout << "Network created\n";
   float running_error = 0.05;
   auto x = env.reset();
+  auto start = std::chrono::steady_clock::now();
   for (int i = 0; i < 30000; i++) {
     if(i%1000 == 0)
       std::cout << "i = " << i << std::endl;
@@ -48,5 +51,15 @@ int main(int argc, char *argv[]) {
 //    network.zero_grad();
     network.backward();
     network.update_parameters(error);
+    if(i % 28*100 == 0){
+      std::cout << "Step = " << i << std::endl;
+      std::cout << "Error= " << running_error << std::endl;
+      auto end = std::chrono::steady_clock::now();
+      std::cout << "Elapsed time in milliseconds for per steps: "
+                << 1000000 / (1+(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() /
+                              my_experiment.get_int_param("steps")))
+                << " fps" << std::endl;
+
+    }
   }
 }
