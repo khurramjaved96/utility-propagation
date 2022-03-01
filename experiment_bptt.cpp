@@ -25,8 +25,7 @@ int main(int argc, char *argv[]) {
                            0,
                            16,
                            6+5+1+16,
-                           28,
-                           1);
+                           28);
 
   std::cout << "Network created\n";
   float running_error = 0.05;
