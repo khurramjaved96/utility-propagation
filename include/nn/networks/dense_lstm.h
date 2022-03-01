@@ -57,8 +57,7 @@ class DenseLSTM {
             int seed,
             int hidden_size,
             int no_of_input_features,
-            int truncation,
-            float init_range);
+            int truncation);
 
   void zero_grad();
 
