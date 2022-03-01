@@ -421,6 +421,19 @@ void DenseLSTM::decay_gradient(float decay_rate) {
     b_grad[counter] *= decay_rate;
 }
 
+
+void DenseLSTM::zero_grad() {
+  for (int counter = 0; counter < this->prediction_weights_grad.size(); counter++)
+    this->prediction_weights_grad[counter] = 0;
+  for (int counter = 0; counter < W_grad.size(); counter++)
+    W_grad[counter] = 0;
+  for (int counter = 0; counter < U_grad.size(); counter++)
+    U_grad[counter]  = 0;
+  for (int counter = 0; counter < b_grad.size(); counter++)
+    b_grad[counter] = 0;
+}
+
+
 void DenseLSTM::update_parameters(float error) {
   for (int counter = 0; counter < this->prediction_weights_grad.size(); counter++)
     this->prediction_weights[counter] += this->prediction_weights_grad[counter] * error * step_size;
