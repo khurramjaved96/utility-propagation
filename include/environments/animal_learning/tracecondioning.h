@@ -53,15 +53,10 @@ class TracePatterning {
   std::uniform_int_distribution<int> ITI_sampler;
   std::uniform_real_distribution<float> NoiseSampler;
   std::vector<float> current_state;
-  bool requires_reset;
-  bool turn_off_first;
   int remaining_steps;
   int pattern_len;
-  int ISI_length;
   int remaining_until_US;
-  int remaining_until_US_long;
   bool valid;
-  std::vector<float> distribution;
   std::vector<std::vector<float>> valid_patterns;
 
   void set_noise_bits();

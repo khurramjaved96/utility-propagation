@@ -19,7 +19,6 @@ TracePatterning::TracePatterning(std::pair<int, int> ISI,  std::pair<int, int> I
     current_state.push_back(0);
   }
 
-  requires_reset = true;
   remaining_steps = 0;
   remaining_until_US = 0;
 
@@ -72,7 +71,7 @@ std::vector<float> TracePatterning::step() {
 
 std::vector<float> TracePatterning::reset() {
   this->remaining_until_US = ISI_sampler(mt);
-  this->remaining_steps = this->remaining_until_US_long + ITI_sampler(mt);
+  this->remaining_steps = this->remaining_until_US + ITI_sampler(mt);
   std::vector<float> state_pattern = this->create_pattern();
   std::uniform_int_distribution<int> valid_or_invalid(0, 1);
 
