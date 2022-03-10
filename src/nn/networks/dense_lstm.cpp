@@ -157,7 +157,7 @@ float DenseLSTM::get_target_without_sideeffects(std::vector<float> inputs) {
 
   float prediction_temp = 0;
   for (int counter = 0; counter < prediction_weights.size(); counter++) {
-    prediction_temp += h_queue[t][counter] * prediction_weights[counter];
+    prediction_temp += h_temp[counter] * prediction_weights[counter];
   }
   return prediction_temp;
 }
