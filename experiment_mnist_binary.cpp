@@ -82,12 +82,8 @@ int main(int argc, char *argv[]) {
     // the last step will be ignored but it doesnt matter
     // just make sure ITI_steps > 0
     row_x.clear();
-    for(int temp = 0*28; temp < (0+1)*28; temp++){
-      if(row < 28)
+    for(int temp = 0*28; temp < (0+1)*28; temp++)
         row_x.push_back(x[temp]/256.0);
-      else
-        row_x.push_back(0.0);
-    }
 
     for(int row = 1; row < 28 + ITI_steps; row ++){
       global_step += 1;

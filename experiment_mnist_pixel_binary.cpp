@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
 
   int ITI_steps = my_experiment.get_int_param("ITI");
   float running_error = 0.05;
-  float gamma = 0.99;
+  float gamma = 0.9;
   float accuracy = 0.1;
 
   std::cout << images.size() << " " << targets.size() << std::endl;
@@ -102,20 +102,22 @@ int main(int argc, char *argv[]) {
       if (pixel_idx == 783)
         target = y + gamma * network.get_target_without_sideeffects(pixel_x);
       else
-        target = 0 + gamma * network.get_target_without_sideeffects(pixel_x);
+        target = 0.0 + gamma * network.get_target_without_sideeffects(pixel_x);
       float error = target - pred;
       float return_error = (return_target - pred) * (return_target - pred);
       running_error = running_error*0.9999 + 0.0001*return_error;
       network.decay_gradient(my_experiment.get_float_param("lambda")*gamma);
       network.backward();
       network.update_parameters(layer, error);
-      if(i%10000 < 20){
+      if(i%1000 < 1){
         std::vector<std::string> cur_error;
         cur_error.push_back(std::to_string(my_experiment.get_int_param("run")));
         cur_error.push_back(std::to_string(global_step));
         cur_error.push_back(std::to_string(i));
         cur_error.push_back(std::to_string(pred));
         cur_error.push_back(std::to_string(return_target));
+        std::cout << pixel_x[0] << " " << y << std::endl;
+        std::cout << target << std::endl;
         print_vector(cur_error);
         avg_error.record_value(cur_error);
       }
