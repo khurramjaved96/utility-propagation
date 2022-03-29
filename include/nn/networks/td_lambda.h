@@ -36,6 +36,12 @@ class TDLambda {
 
   std::vector<float> prediction_weights;
 
+  std::vector<float> feature_mean;
+
+  std::vector<float> feature_std;
+
+  std::vector<float> avg_feature_value;
+
   std::vector<float> prediction_weights_gradient;
 
   float  get_target_without_sideeffects(std::vector<float> inputs);
@@ -65,6 +71,8 @@ class TDLambda {
   void update_parameters(int layer, float error);
 
   void update_parameters_no_freeze(float error);
+
+  std::vector<float> get_state();
 
   void reset_state();
 
