@@ -50,10 +50,12 @@ TDLambda::TDLambda(float step_size,
 
   for (int counter = 0; counter < total_recurrent_features; counter++) {
     int layer_no = counter / layer_size;
+    //int max_connections = (layer_no * layer_size) + no_of_input_features; //dense
+    int max_connections = no_of_input_features;
     int incoming_features = 0;
     std::vector<int> map_index(no_of_input_features + total_recurrent_features, 0);
     int counter_temp_temp = 0;
-    while (incoming_features < no_of_input_features) {
+    while (incoming_features < max_connections) {
 //    while (counter_temp_temp < 4000) {
       counter_temp_temp++;
       int index = index_sampler(second_mt);
@@ -75,6 +77,8 @@ TDLambda::TDLambda(float step_size,
 //            std::cout << index << "\t" << counter << std::endl;
             incoming_features++;
             Neuron *neuron_ref = &this->LSTM_neurons[index];
+            //TODO making it single layer
+            //Neuron *neuron_ref = &this->input_neurons[index];
             LSTM_neurons[counter].add_synapse(neuron_ref,
                                               weight_sampler(mt),
                                               weight_sampler(mt),
@@ -86,9 +90,12 @@ TDLambda::TDLambda(float step_size,
     }
   }
 //  for(int counter = 0; counter < this->LSTM_neurons.size(); counter++){
+//    int total = 0;
 //    for(int inner_counter = 0; inner_counter < this->LSTM_neurons[counter].incoming_neurons.size(); inner_counter++){
+//      total++;
 //      std::cout << this->LSTM_neurons[counter].incoming_neurons[inner_counter]->id << "\tto\t" << this->LSTM_neurons[counter].id << std::endl;
 //    }
+//   std::cout << "total: " << total << std::endl;
 //  }
 //  exit(1);
 
@@ -221,7 +228,7 @@ void TDLambda::update_parameters(int layer, float error) {
 //  }
   for (int index = 0; index < LSTM_neurons.size(); index++) {
     if ((layer) * layer_size <= index && index < (layer + 1) * layer_size)
-//      std::cout << "Training neuron = " << index << std::endl;
+      //std::cout << "Training neuron = " << index << std::endl;
       LSTM_neurons[index].update_weights(step_size, error);
   }
 
