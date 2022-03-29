@@ -50,14 +50,14 @@ int main(int argc, char *argv[]) {
 //    network.zero_grad();
     network.backward();
     network.update_parameters(error);
-    if(i % 28*100 == 0){
+    if(i % (38*100) == 0){
       std::cout << "Step = " << i << std::endl;
       std::cout << "Error= " << running_error << std::endl;
       auto end = std::chrono::steady_clock::now();
       std::cout << "Elapsed time in milliseconds for per steps: "
-                << 1000000 / (1+(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() /
-                              my_experiment.get_int_param("steps")))
-                << " fps" << std::endl;
+                << std::chrono::duration_cast<std::chrono::duration<double>>(end- start).count()
+                << " seconds" << std::endl;
+      start = std::chrono::steady_clock::now();
 
     }
   }

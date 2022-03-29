@@ -1,6 +1,7 @@
 #include <iostream>
 #include <math.h>
-#include "include/nn/networks/td_lambda.h"
+#include <chrono>
+#include "include/nn/networks/dense_lstm.h"
 #include "include/utils.h"
 #include "include/nn/utils.h"
 #include "include/experiment/Experiment.h"
@@ -12,6 +13,7 @@
 
 
 int main(int argc, char *argv[]) {
+  auto start = std::chrono::steady_clock::now();
   Experiment my_experiment = Experiment(argc, argv);
 
   Metric error_metric = Metric(my_experiment.database_name, "error_table",
@@ -38,12 +40,11 @@ int main(int argc, char *argv[]) {
   std::vector<std::vector<float>> targets;
 
 
-  auto network = TDLambda(my_experiment.get_float_param("step_size"),
+  auto network = DenseLSTM(my_experiment.get_float_param("step_size"),
                        my_experiment.get_int_param("seed"),
-                      28,
-                       1,
                        my_experiment.get_int_param("features"),
-                       my_experiment.get_int_param("width"));
+                       1,
+                       my_experiment.get_int_param("truncation"));
 
   for(int counter = 0; counter < total_data_points; counter++){
     std::vector<float> x_temp;
@@ -62,63 +63,54 @@ int main(int argc, char *argv[]) {
 
   int ITI_steps = my_experiment.get_int_param("ITI");
   float running_error = 0.05;
-  float gamma = 0.8; // err @ 0 pred: 0.2 @ 20 step, 0.04 @ 14 step, 0.02 @ 0 step
+  float gamma = 0.9;
   float accuracy = 0.1;
 
   std::cout << images.size() << " " << targets.size() << std::endl;
-  int layer = 0;
   int global_step = 0;
-  std::vector<float> row_x;
+  std::vector<float> pixel_x;
   for (int i = 0; i < my_experiment.get_int_param("steps"); i++) {
-    if(i % my_experiment.get_int_param("freq") == my_experiment.get_int_param("freq") - 1){
-      layer++;
-      std::cout << "Increasing layer\n";
-    }
-
     int index = index_sampler(mt);
 //    std::cout << "INdex =  " << index << std::endl;
     auto x = images[index];
     float y = targets[index][0];
-    // the last step will be ignored but it doesnt matter
-    // just make sure ITI_steps > 0
-    row_x.clear();
-    for(int temp = 0*28; temp < (0+1)*28; temp++)
-        row_x.push_back(x[temp]/256.0);
+    // Last ITI step will be ignored but it doesnt matter
+    pixel_x.clear();
+    pixel_x.push_back(x[0]/256.0);
 
-    for(int row = 1; row < 28 + ITI_steps; row ++){
+    for(int pixel_idx= 1; pixel_idx < 784 + ITI_steps; pixel_idx++){
       global_step += 1;
 
-      float pred = network.forward(row_x);
+      float pred = network.forward(pixel_x);
       float target = 0;
       float return_target = 0;
-
-      row_x.clear();
-      for(int temp = row*28; temp < (row+1)*28; temp++){
-        if(row < 28)
-          row_x.push_back(x[temp]/256.0);
-        else
-          row_x.push_back(0.0);
-      }
-
-      if (row < 28)
-        return_target = y*pow(gamma, 27 - row);
-      if (row == 27)
-        target = y + gamma * network.get_target_without_sideeffects(row_x);
+      std::vector<float> pixel_x;
+      pixel_x.clear();
+      if (pixel_idx < 784)
+        pixel_x.push_back(x[pixel_idx]/256.0);
       else
-        target = 0 + gamma * network.get_target_without_sideeffects(row_x);
+        pixel_x.push_back(0.0);
+      if (pixel_idx < 784)
+        return_target = y*pow(gamma, 783 - pixel_idx);
+      if (pixel_idx == 783)
+        target = y + gamma * network.get_target_without_sideeffects(pixel_x);
+      else
+        target = 0.0 + gamma * network.get_target_without_sideeffects(pixel_x);
       float error = target - pred;
       float return_error = (return_target - pred) * (return_target - pred);
       running_error = running_error*0.9999 + 0.0001*return_error;
       network.decay_gradient(my_experiment.get_float_param("lambda")*gamma);
       network.backward();
-      network.update_parameters(layer, error);
-      if(i%10000 < 20){
+      network.update_parameters(error);
+      if(i%1000 < 1){
         std::vector<std::string> cur_error;
         cur_error.push_back(std::to_string(my_experiment.get_int_param("run")));
         cur_error.push_back(std::to_string(global_step));
         cur_error.push_back(std::to_string(i));
         cur_error.push_back(std::to_string(pred));
         cur_error.push_back(std::to_string(return_target));
+        std::cout << pixel_x[0] << " " << y << std::endl;
+        std::cout << target << std::endl;
         print_vector(cur_error);
         avg_error.record_value(cur_error);
       }
@@ -140,6 +132,24 @@ int main(int argc, char *argv[]) {
     if(i%15000 == 0){
       error_metric.commit_values();
       avg_error.commit_values();
+    }
+
+    if(i % 1000 == 0){
+      std::cout << "Step = " << i << std::endl;
+      std::cout << "Error= " << running_error << std::endl;
+      auto end = std::chrono::steady_clock::now();
+      std::cout << "Elapsed time in milliseconds for per steps: "
+                << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
+                << " ms" << std::endl;
+      std::cout << "Elapsed time in milliseconds for per steps: "
+                << std::chrono::duration_cast<std::chrono::duration<double>>(end- start).count()
+                << " seconds" << std::endl;
+      std::cout << "Elapsed time in milliseconds for per steps: "
+                << 1000000 / (1+(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() /
+                              my_experiment.get_int_param("steps")))
+                << " fps" << std::endl;
+      start = std::chrono::steady_clock::now();
+
     }
   }
 }
