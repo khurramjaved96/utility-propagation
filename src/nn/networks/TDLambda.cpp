@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <cmath>
 #include "../../../include/nn/networks/td_lambda.h"
 #include "../../../include/nn/neuron.h"
 //
@@ -53,7 +54,9 @@ TDLambda::TDLambda(float step_size,
     int incoming_features = 0;
     std::vector<int> map_index(no_of_input_features + total_recurrent_features, 0);
     int counter_temp_temp = 0;
-    while (incoming_features < no_of_input_features) {
+    int temp_counter = 0;
+    while (temp_counter < 5000) {
+      temp_counter++;
 //    while (counter_temp_temp < 4000) {
       counter_temp_temp++;
       int index = index_sampler(second_mt);
@@ -85,11 +88,12 @@ TDLambda::TDLambda(float step_size,
       }
     }
   }
-//  for(int counter = 0; counter < this->LSTM_neurons.size(); counter++){
-//    for(int inner_counter = 0; inner_counter < this->LSTM_neurons[counter].incoming_neurons.size(); inner_counter++){
-//      std::cout << this->LSTM_neurons[counter].incoming_neurons[inner_counter]->id << "\tto\t" << this->LSTM_neurons[counter].id << std::endl;
-//    }
-//  }
+  for (int counter = 0; counter < this->LSTM_neurons.size(); counter++) {
+    for (int inner_counter = 0; inner_counter < this->LSTM_neurons[counter].incoming_neurons.size(); inner_counter++) {
+      std::cout << this->LSTM_neurons[counter].incoming_neurons[inner_counter]->id << "\tto\t"
+                << this->LSTM_neurons[counter].id << std::endl;
+    }
+  }
 //  exit(1);
 
   predictions = 0;
@@ -122,24 +126,25 @@ float TDLambda::forward(std::vector<float> inputs) {
 
   for (int counter = 0; counter < LSTM_neurons.size(); counter++) {
     LSTM_neurons[counter].fire();
-    avg_feature_value[counter] = avg_feature_value[counter]*0.99999 + 0.00001*(LSTM_neurons[counter].value - feature_mean[counter]);
+    avg_feature_value[counter] =
+        avg_feature_value[counter] * 0.99999 + 0.00001 * (LSTM_neurons[counter].value - feature_mean[counter]);
   }
 //  std::cout << "Feature value = " << LSTM_neurons[0].value << "\t" <<  (LSTM_neurons[0].value - feature_mean[0])/sqrt(feature_std[0]) << std::endl;
 
-  for(int counter = 0; counter < LSTM_neurons.size(); counter++){
-    feature_mean[counter] = feature_mean[counter]*0.99999 + 0.00001*LSTM_neurons[counter].value;
+  for (int counter = 0; counter < LSTM_neurons.size(); counter++) {
+    feature_mean[counter] = feature_mean[counter] * 0.99999 + 0.00001 * LSTM_neurons[counter].value;
 //    std::cout << "Feature mean = " << feature_mean[counter] << std::endl;
-    if(std::isnan(feature_mean[counter])) {
+    if (std::isnan(feature_mean[counter])) {
       std::cout << "feature value = " << LSTM_neurons[counter].value << std::endl;
       exit(1);
     }
     float temp = (feature_mean[counter] - LSTM_neurons[counter].value);
-    feature_std[counter] = feature_std[counter]*0.99999 + 0.00001*temp*temp;
+    feature_std[counter] = feature_std[counter] * 0.99999 + 0.00001 * temp * temp;
   }
 
   predictions = 0;
   for (int i = 0; i < prediction_weights.size(); i++) {
-    predictions += prediction_weights[i] * (this->LSTM_neurons[i].value - feature_mean[i])/sqrt(feature_std[i]);
+    predictions += prediction_weights[i] * (this->LSTM_neurons[i].value - feature_mean[i]) / sqrt(feature_std[i]);
   }
   predictions += bias;
   return predictions;
@@ -162,7 +167,7 @@ float TDLambda::get_target_without_sideeffects(std::vector<float> inputs) {
 //  Compute prediction
   float temp_prediction = 0;
   for (int i = 0; i < prediction_weights.size(); i++) {
-    temp_prediction += prediction_weights[i] * ((hidden_state[i] - feature_mean[i])/sqrt(feature_std[i]));
+    temp_prediction += prediction_weights[i] * ((hidden_state[i] - feature_mean[i]) / sqrt(feature_std[i]));
   }
   temp_prediction += bias;
 
@@ -209,7 +214,7 @@ void TDLambda::decay_gradient(float decay_rate) {
 std::vector<float> TDLambda::get_state() {
   std::vector<float> my_vec;
   my_vec.reserve(LSTM_neurons.size());
-  for(int index = 0; index < LSTM_neurons.size(); index++){
+  for (int index = 0; index < LSTM_neurons.size(); index++) {
     my_vec.push_back(LSTM_neurons[index].value);
   }
   return my_vec;
@@ -219,12 +224,12 @@ void TDLambda::backward() {
 
 //  Update the prediction weights
   for (int index = 0; index < LSTM_neurons.size(); index++) {
-    float gradient = prediction_weights[index]/sqrt(feature_std[index]);
+    float gradient = prediction_weights[index] / sqrt(feature_std[index]);
     LSTM_neurons[index].accumulate_gradient(gradient);
   }
 
   for (int index = 0; index < LSTM_neurons.size(); index++) {
-    prediction_weights_gradient[index] += (LSTM_neurons[index].value - feature_mean[index])/sqrt(feature_std[index]);
+    prediction_weights_gradient[index] += (LSTM_neurons[index].value - feature_mean[index]) / sqrt(feature_std[index]);
   }
 
   bias_gradients += 1;
