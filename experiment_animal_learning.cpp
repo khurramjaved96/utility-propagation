@@ -54,12 +54,29 @@ int main(int argc, char *argv[]) {
     if(i % my_experiment.get_int_param("freq") == my_experiment.get_int_param("freq") - 1){
       layer++;
       std::cout << "Increasing layer\n";
+      print_vector(network.prediction_weights);
+      std::cout << "Avg feature value\n";
+      print_vector(network.avg_feature_value);
+      print_vector(network.feature_mean);
+      print_vector(network.feature_std);
     }
+
+
 
     float gamma = 0.9;
     float pred = network.forward(x);
     float real_target = env.get_target(gamma);
-
+//    std::cout << "Step = " << i << "\n";
+//    print_vector(x);
+//    print_vector(network.get_state());
+//    std::cout << "Prediction = " << pred << std::endl;
+//    print_vector(network.prediction_weights);
+//    float temp_pred = 0;
+//    for(int temp_counter = 0; temp_counter < network.prediction_weights.size(); temp_counter++){
+//      temp_pred += network.prediction_weights[temp_counter]*network.get_state()[temp_counter];
+//    }
+//    std::cout << "Temp pred = " << temp_pred << std::endl;
+//    std::cout << "\n\n";
     if(i%100000 < 400){
       std::vector<std::string> cur_error;
       cur_error.push_back(std::to_string(my_experiment.get_int_param("run")));
@@ -101,7 +118,7 @@ int main(int argc, char *argv[]) {
     float error = target - pred;
 //    float se = error*error;
     float real_error = (real_target - pred)*(real_target - pred);
-    running_error = running_error*0.9999 + 0.0001*real_error;
+    running_error = running_error*0.99999 + 0.00001*real_error;
     network.decay_gradient(my_experiment.get_float_param("lambda")*gamma);
 //    network.zero_grad();
     network.backward();
