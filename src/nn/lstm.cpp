@@ -514,8 +514,8 @@ std::vector<float> LSTM::get_normalized_values() {
 void LSTM::update_statistics() {
   for(int counter = 0; counter < this->incoming_neurons.size(); counter++){
       float val = this->incoming_neurons[counter]->value;
-      this->input_means[counter] = this->input_means[counter]*0.9999 + 0.0001*val;
-      this->input_std[counter] = this->input_std[counter]*0.9999 + 0.0001*(val - this->input_means[counter])*(val - this->input_means[counter]);
+      this->input_means[counter] = this->input_means[counter]*0.99999 + 0.00001*val;
+      this->input_std[counter] = this->input_std[counter]*0.99999 + 0.00001*(val - this->input_means[counter])*(val - this->input_means[counter]);
   }
 }
 
