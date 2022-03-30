@@ -23,6 +23,11 @@ int main(int argc, char *argv[]) {
                             std::vector < std::string > {"run", "global_step", "step", "pred", "target"},
                             std::vector < std::string > {"int", "int", "int", "real", "real"},
                             std::vector < std::string > {"run", "global_step"});
+
+//  Metric weights = Metric(my_experiment.database_name, "weights",
+//                            std::vector < std::string > {"run", "global_step", "step", "LSTM_idx", "outgoing_weights", "incoming_value"},
+//                            std::vector < std::string > {"int", "int", "int", "int", "real", "real"},
+//                            std::vector < std::string > {"run", "global_step", "LSTM_idx"});
   std::cout << "Program started \n";
 
   std::mt19937 mt(my_experiment.get_int_param("seed"));
@@ -74,6 +79,16 @@ int main(int argc, char *argv[]) {
       layer++;
       std::cout << "Increasing layer\n";
     }
+
+
+//  if (i % 100 == 0){
+//    for(int counter = 0; counter < network.LSTM_neurons.size(); counter++){
+//      for(int inner_counter = 0; inner_counter < network.LSTM_neurons[counter].incoming_neurons.size(); inner_counter++){
+//        network.LSTM_neurons[counter].print_gradients();
+//        std::cout << network.LSTM_neurons[counter].incoming_neurons[inner_counter]->id << ":" << "\tto\t" << network.LSTM_neurons[counter].id << ":" << network.prediction_weights[counter] << std::endl;
+//      }
+//    }
+//  }
 
     int index = index_sampler(mt);
 //    std::cout << "INdex =  " << index << std::endl;

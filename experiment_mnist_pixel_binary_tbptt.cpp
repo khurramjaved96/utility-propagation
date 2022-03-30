@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
 
   int ITI_steps = my_experiment.get_int_param("ITI");
   float running_error = 0.05;
-  float gamma = 0.9;
+  float gamma = 0.99;
   float accuracy = 0.1;
 
   std::cout << images.size() << " " << targets.size() << std::endl;
@@ -102,15 +102,15 @@ int main(int argc, char *argv[]) {
       network.decay_gradient(my_experiment.get_float_param("lambda")*gamma);
       network.backward();
       network.update_parameters(error);
-      if(i%1000 < 1){
+      if(i%(10000/28) < 20){
         std::vector<std::string> cur_error;
         cur_error.push_back(std::to_string(my_experiment.get_int_param("run")));
         cur_error.push_back(std::to_string(global_step));
         cur_error.push_back(std::to_string(i));
         cur_error.push_back(std::to_string(pred));
         cur_error.push_back(std::to_string(return_target));
-        std::cout << pixel_x[0] << " " << y << std::endl;
-        std::cout << target << std::endl;
+        //std::cout << pixel_x[0] << " " << y << std::endl;
+        //std::cout << target << std::endl;
         print_vector(cur_error);
         avg_error.record_value(cur_error);
       }
@@ -134,22 +134,22 @@ int main(int argc, char *argv[]) {
       avg_error.commit_values();
     }
 
-    if(i % 1000 == 0){
-      std::cout << "Step = " << i << std::endl;
-      std::cout << "Error= " << running_error << std::endl;
-      auto end = std::chrono::steady_clock::now();
-      std::cout << "Elapsed time in milliseconds for per steps: "
-                << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
-                << " ms" << std::endl;
-      std::cout << "Elapsed time in milliseconds for per steps: "
-                << std::chrono::duration_cast<std::chrono::duration<double>>(end- start).count()
-                << " seconds" << std::endl;
-      std::cout << "Elapsed time in milliseconds for per steps: "
-                << 1000000 / (1+(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() /
-                              my_experiment.get_int_param("steps")))
-                << " fps" << std::endl;
-      start = std::chrono::steady_clock::now();
-
-    }
+//    if(i % 1000 == 0){
+//      std::cout << "Step = " << i << std::endl;
+//      std::cout << "Error= " << running_error << std::endl;
+//      auto end = std::chrono::steady_clock::now();
+//      std::cout << "Elapsed time in milliseconds for per steps: "
+//                << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
+//                << " ms" << std::endl;
+//      std::cout << "Elapsed time in milliseconds for per steps: "
+//                << std::chrono::duration_cast<std::chrono::duration<double>>(end- start).count()
+//                << " seconds" << std::endl;
+//      std::cout << "Elapsed time in milliseconds for per steps: "
+//                << 1000000 / (1+(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() /
+//                              my_experiment.get_int_param("steps")))
+//                << " fps" << std::endl;
+//      start = std::chrono::steady_clock::now();
+//
+//    }
   }
 }

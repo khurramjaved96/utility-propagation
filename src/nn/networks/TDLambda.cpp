@@ -51,6 +51,8 @@ TDLambda::TDLambda(float step_size,
 
   for (int counter = 0; counter < total_recurrent_features; counter++) {
     int layer_no = counter / layer_size;
+    //int max_connections = (layer_no * layer_size) + no_of_input_features; //dense
+    int max_connections = no_of_input_features;
     int incoming_features = 0;
     std::vector<int> map_index(no_of_input_features + total_recurrent_features, 0);
     int counter_temp_temp = 0;
@@ -78,6 +80,8 @@ TDLambda::TDLambda(float step_size,
 //            std::cout << index << "\t" << counter << std::endl;
             incoming_features++;
             Neuron *neuron_ref = &this->LSTM_neurons[index];
+            //TODO making it single layer
+            //Neuron *neuron_ref = &this->input_neurons[index];
             LSTM_neurons[counter].add_synapse(neuron_ref,
                                               weight_sampler(mt),
                                               weight_sampler(mt),
@@ -250,7 +254,7 @@ void TDLambda::update_parameters(int layer, float error) {
 //  }
   for (int index = 0; index < LSTM_neurons.size(); index++) {
     if ((layer) * layer_size <= index && index < (layer + 1) * layer_size)
-//      std::cout << "Training neuron = " << index << std::endl;
+      //std::cout << "Training neuron = " << index << std::endl;
       LSTM_neurons[index].update_weights(step_size, error);
   }
 
