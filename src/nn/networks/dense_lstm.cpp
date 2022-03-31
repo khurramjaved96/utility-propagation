@@ -253,8 +253,16 @@ float DenseLSTM::forward(std::vector<float> inputs) {
   for (int h_index = 0; h_index < this->hidden_state_size; h_index++) {
     c_queue[t][h_index] = f_queue[t][h_index] * c_queue[t_1][h_index] + i_queue[t][h_index] * g_queue[t][h_index];
     h_queue[t][h_index] = o_queue[t][h_index] * tanh(c_queue[t][h_index]);
+    if(std::isnan(h_queue[t][h_index])){
+      for(int it = 0; it < truncation; it ++){
+        std::cout << "T = " << it << ": ";
+        print_vector(h_queue[t]);
+      }
+      std::cout << "NAN happening\n";
+      exit(1);
+    }
   }
-
+//
   float prediction_temp = 0;
   for (int counter = 0; counter < prediction_weights.size(); counter++) {
     prediction_temp += h_queue[t][counter] * prediction_weights[counter];
