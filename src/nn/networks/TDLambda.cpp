@@ -215,6 +215,24 @@ void TDLambda::decay_gradient(float decay_rate) {
 
 }
 
+std::vector<float> TDLambda::get_prediction_weights() {
+  std::vector<float> my_vec;
+  my_vec.reserve(prediction_weights.size());
+  for (int index = 0; index < prediction_weights.size(); index++) {
+    my_vec.push_back(prediction_weights[index]);
+  }
+  return my_vec;
+}
+
+std::vector<float> TDLambda::get_prediction_gradients() {
+  std::vector<float> my_vec;
+  my_vec.reserve(prediction_weights_gradient.size());
+  for (int index = 0; index < prediction_weights_gradient.size(); index++) {
+    my_vec.push_back(prediction_weights_gradient[index]);
+  }
+  return my_vec;
+}
+
 std::vector<float> TDLambda::get_state() {
   std::vector<float> my_vec;
   my_vec.reserve(LSTM_neurons.size());
@@ -224,6 +242,14 @@ std::vector<float> TDLambda::get_state() {
   return my_vec;
 }
 
+std::vector<float> TDLambda::get_normalized_state() {
+  std::vector<float> my_vec;
+  my_vec.reserve(LSTM_neurons.size());
+  for (int i = 0; i < LSTM_neurons.size(); i++) {
+    my_vec.push_back((this->LSTM_neurons[i].value - feature_mean[i]) / sqrt(feature_std[i]));
+  }
+  return my_vec;
+}
 void TDLambda::backward() {
 
 //  Update the prediction weights
@@ -260,8 +286,14 @@ void TDLambda::update_parameters(int layer, float error) {
 
   for (int index = 0; index < LSTM_neurons.size(); index++) {
     if (index < (layer + 1) * layer_size) {
+      float scaling = 1;
+      if (fabs(prediction_weights_gradient[index]) > (step_size * 1000))
+        scaling = 1/10000;
+//      scaling = step_size * 10000 / prediction_weights_gradient[index];
 //    if ((layer) * layer_size <= index && index < (layer + 1) * layer_size){
-      prediction_weights[index] += prediction_weights_gradient[index] * error * step_size;
+
+      scaling = 1;
+      prediction_weights[index] += prediction_weights_gradient[index] * error * step_size * scaling;
     }
   }
 

@@ -271,6 +271,16 @@ float DenseLSTM::forward(std::vector<float> inputs) {
   return prediction_temp;
 }
 
+std::vector<float> DenseLSTM::get_normalized_state() {
+  int t = this->time_step % truncation;
+  std::vector<float> my_vec;
+  my_vec.reserve(prediction_weights.size());
+  for (int i = 0; i < prediction_weights.size(); i++) {
+    my_vec.push_back(h_queue[t][i]);
+  }
+  return my_vec;
+}
+
 void DenseLSTM::backward() {
 
 //  For the last step, only gradient from the prediction flows backwards

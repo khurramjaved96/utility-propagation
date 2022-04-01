@@ -28,6 +28,11 @@ int main(int argc, char *argv[]) {
                             std::vector < std::string > {"int", "int", "real" , "real", "real", "real", "real", "real", "real", "real", "real"},
                             std::vector < std::string > {"run", "step"});
 
+  Metric network_state = Metric(my_experiment.database_name, "network_state",
+                                std::vector < std::string > {"run", "step", "x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9"},
+                                std::vector <std::string > {"int", "int", "real", "real", "real", "real", "real", "real", "real", "real", "real", "real"},
+                                std::vector <std::string> {"run", "step"});
+
   std::cout << "Program started \n";
 
   std::mt19937 mt(my_experiment.get_float_param("seed"));
@@ -79,6 +84,15 @@ int main(int argc, char *argv[]) {
       cur_error.push_back(std::to_string(running_error));
       error_metric.record_value(cur_error);
     }
+    if(i > 5000000 && i < 5200000){
+      std::vector<float> network_state_cur = network.get_normalized_state();
+      std::vector<std::string> cur_state;
+      cur_state.push_back(std::to_string(my_experiment.get_int_param("run")));
+      cur_state.push_back(std::to_string(i));
+      for(int counter_vec = 0; counter_vec < network_state_cur.size(); counter_vec++)
+        cur_state.push_back(std::to_string(network_state_cur[counter_vec]));
+      network_state.record_value(cur_state);
+    }
     if(i % (38*100) == 0 && false){
       std::cout << "Step = " << i << std::endl;
       std::cout << "Error= " << running_error << std::endl;
@@ -93,8 +107,10 @@ int main(int argc, char *argv[]) {
       std::cout << "Step = " << i << " Error = " << running_error << std::endl;
       error_metric.commit_values();
       avg_error.commit_values();
+      network_state.commit_values();
     }
   }
   error_metric.commit_values();
   avg_error.commit_values();
+  network_state.commit_values();
 }

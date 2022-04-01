@@ -72,7 +72,11 @@ class TDLambda {
 
   void update_parameters_no_freeze(float error);
 
+  std::vector<float> get_prediction_gradients();
+  std::vector<float> get_prediction_weights();
+
   std::vector<float> get_state();
+  std::vector<float> get_normalized_state();
 
   void reset_state();
 

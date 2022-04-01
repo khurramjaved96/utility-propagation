@@ -72,6 +72,7 @@ class DenseLSTM {
   void update_parameters(float error);
 
   void reset_state();
+  std::vector<float> get_normalized_state();
 
 };
 

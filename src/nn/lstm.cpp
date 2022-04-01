@@ -398,6 +398,10 @@ float LSTM::get_value_without_sideeffects(){
 
   float c_t = f_t * old_c_t + i_val_t * g_t;
   float h_t = o_t * tanh(c_t);
+//  if (h_t > 1)
+//    h_t = 1;
+//  if (h_t < -1)
+//    h_t = -1;
   return h_t;
 }
 
