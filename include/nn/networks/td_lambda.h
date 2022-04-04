@@ -30,6 +30,10 @@ class TDLambda {
   float bias_gradients;
   float layer_size;
 
+  float a_f; //online norm forward decay factor
+  float a_b; //online norm backward decay factor
+  float zeta; //layer scaling denominator eq.9
+
   //  These indexes are used to do parallel computation since std::parallel does not provide rank of a thread
   std::vector<int> indexes;
   std::vector<int> indexes_lstm_cells;
@@ -39,6 +43,12 @@ class TDLambda {
   std::vector<float> feature_mean;
 
   std::vector<float> feature_std;
+
+  std::vector<float> feature_value_normalized; // y_t
+  std::vector<float> feature_value_layer_scaled; // z_t
+  std::vector<float> e_y;
+  std::vector<float> e_1;
+
 
   std::vector<float> avg_feature_value;
 
