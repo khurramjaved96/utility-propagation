@@ -192,13 +192,13 @@ float TDLambda::forward(std::vector<float> inputs) {
     this->feature_value_layer_scaled[i] = this->feature_value_normalized[i] / this->zeta; //9
 
   for (int counter = 0; counter < LSTM_neurons.size(); counter++) {
+    float temp = (feature_mean[counter] - LSTM_neurons[counter].value);
+    feature_std[counter] = a_f * feature_std[counter] + a_f * (1 - a_f) * temp * temp; //8c
     feature_mean[counter] = a_f * feature_mean[counter] + (1 - a_f) * LSTM_neurons[counter].value; //8b
     if (std::isnan(feature_mean[counter])) {
       std::cout << "feature value = " << LSTM_neurons[counter].value << std::endl;
       exit(1);
     }
-    float temp = (feature_mean[counter] - LSTM_neurons[counter].value);
-    feature_std[counter] = a_f * feature_std[counter] + a_f * (1 - a_f) * temp * temp; //8c
   }
 
   predictions = 0;
@@ -226,7 +226,8 @@ float TDLambda::get_target_without_sideeffects(std::vector<float> inputs) {
 //  Compute prediction
   float temp_prediction = 0;
   for (int i = 0; i < prediction_weights.size(); i++) {
-    temp_prediction += prediction_weights[i] * ((hidden_state[i] - feature_mean[i]) / sqrt(feature_std[i]));
+    //temp_prediction += prediction_weights[i] * ((hidden_state[i] - feature_mean[i]) / sqrt(feature_std[i]));
+    temp_prediction += prediction_weights[i] * feature_value_layer_scaled[i];
   }
   temp_prediction += bias;
 
@@ -333,7 +334,7 @@ void TDLambda::backward() {
   for (int index = 0; index < LSTM_neurons.size(); index++) {
     float y_grad = (prediction_weights[index] - feature_value_layer_scaled[index] * mean_of_dot_products) / this->zeta; // y_t' from eq.10
     float x_bar_grad = y_grad - (1 - a_b) * e_y[index] * feature_value_normalized[index]; // 11a
-    float x_grad = (x_bar_grad / sqrt(feature_std[index])) - (1 - a_b) * e_1[index]; // 12a
+    float x_grad = (x_bar_grad / sqrt(feature_std[index])) - (1 - a_b) * e_1[index]; // 12a (TODO: should be old std)
     LSTM_neurons[index].accumulate_gradient(x_grad);
 
     e_y[index] += x_bar_grad * feature_value_normalized[index]; // 11b
