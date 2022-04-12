@@ -43,7 +43,8 @@ int main(int argc, char *argv[]) {
                        6 + 5 + 1,
                        1,
                        my_experiment.get_int_param("features"),
-                       my_experiment.get_int_param("width"));
+                       my_experiment.get_int_param("width")
+                       );
 
   std::cout << "Network created\n";
   float running_error = 0.05;

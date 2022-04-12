@@ -17,9 +17,6 @@ TDLambda::TDLambda(float step_size,
   this->layer_size = layer_size;
   this->step_size = step_size;
   this->mt.seed(seed);
-
-  this->a_f = 0.99999;
-  this->a_b = 0.9999;
   std::mt19937 second_mt(seed);
   std::uniform_real_distribution<float> weight_sampler(-0.1, 0.1);
   std::uniform_real_distribution<float> prob_sampler(0, 1);
@@ -112,54 +109,8 @@ TDLambda::TDLambda(float step_size,
     avg_feature_value.push_back(0);
     feature_mean.push_back(0);
     feature_std.push_back(1);
-    feature_value_normalized.push_back(0);
-    feature_value_layer_scaled.push_back(0);
-    e_y.push_back(0);
-    e_1.push_back(0);
   }
 }
-
-//float TDLambda::forward(std::vector<float> inputs) {
-////  Set input neurons value
-////  if(this->time_step%100000 == 99999)
-////    this->step_size *= 0.8;
-//  for (int i = 0; i < inputs.size(); i++) {
-//    this->input_neurons[i].value = inputs[i];
-//  }
-//
-//  for (int counter = 0; counter < LSTM_neurons.size(); counter++) {
-//    LSTM_neurons[counter].update_value_sync();
-//  }
-//
-//  for (int counter = 0; counter < LSTM_neurons.size(); counter++) {
-//    LSTM_neurons[counter].compute_gradient_of_all_synapses();
-//  }
-//
-//  for (int counter = 0; counter < LSTM_neurons.size(); counter++) {
-//    LSTM_neurons[counter].fire();
-//    avg_feature_value[counter] =
-//        avg_feature_value[counter] * 0.99999 + 0.00001 * (LSTM_neurons[counter].value - feature_mean[counter]);
-//  }
-////  std::cout << "Feature value = " << LSTM_neurons[0].value << "\t" <<  (LSTM_neurons[0].value - feature_mean[0])/sqrt(feature_std[0]) << std::endl;
-//
-//  for (int counter = 0; counter < LSTM_neurons.size(); counter++) {
-//    feature_mean[counter] = feature_mean[counter] * 0.99999 + 0.00001 * LSTM_neurons[counter].value;
-////    std::cout << "Feature mean = " << feature_mean[counter] << std::endl;
-//    if (std::isnan(feature_mean[counter])) {
-//      std::cout << "feature value = " << LSTM_neurons[counter].value << std::endl;
-//      exit(1);
-//    }
-//    float temp = (feature_mean[counter] - LSTM_neurons[counter].value);
-//    feature_std[counter] = feature_std[counter] * 0.99999 + 0.00001 * temp * temp;
-//  }
-//
-//  predictions = 0;
-//  for (int i = 0; i < prediction_weights.size(); i++) {
-//    predictions += prediction_weights[i] * (this->LSTM_neurons[i].value - feature_mean[i]) / sqrt(feature_std[i]);
-//  }
-//  predictions += bias;
-//  return predictions;
-//}
 
 float TDLambda::forward(std::vector<float> inputs) {
 //  Set input neurons value
@@ -179,31 +130,27 @@ float TDLambda::forward(std::vector<float> inputs) {
 
   for (int counter = 0; counter < LSTM_neurons.size(); counter++) {
     LSTM_neurons[counter].fire();
+    avg_feature_value[counter] =
+        avg_feature_value[counter] * 0.99999 + 0.00001 * (LSTM_neurons[counter].value - feature_mean[counter]);
   }
-
-  //TODO adjust the statistics to take only the active features into account for constructive/hybrid case
-  this->zeta = 0;
-  for (int i = 0; i< LSTM_neurons.size(); i++) {
-    this->feature_value_normalized[i] = (this->LSTM_neurons[i].value - feature_mean[i]) / sqrt(feature_std[i]); //8a
-    this->zeta += this->feature_value_normalized[i] * this->feature_value_normalized[i]; //9 denominator
-  }
-  this->zeta = sqrt(this->zeta / LSTM_neurons.size()); // the weird squiggly character is zeta
-  for (int i = 0; i< LSTM_neurons.size(); i++)
-    this->feature_value_layer_scaled[i] = this->feature_value_normalized[i] / this->zeta; //9
+//  std::cout << "Feature value = " << LSTM_neurons[0].value << "\t" <<  (LSTM_neurons[0].value - feature_mean[0])/sqrt(feature_std[0]) << std::endl;
 
   for (int counter = 0; counter < LSTM_neurons.size(); counter++) {
-    float temp = (feature_mean[counter] - LSTM_neurons[counter].value);
-    feature_std[counter] = a_f * feature_std[counter] + a_f * (1 - a_f) * temp * temp; //8c
-    feature_mean[counter] = a_f * feature_mean[counter] + (1 - a_f) * LSTM_neurons[counter].value; //8b
+    feature_mean[counter] = feature_mean[counter] * 0.99999 + 0.00001 * LSTM_neurons[counter].value;
+//    std::cout << "Feature mean = " << feature_mean[counter] << std::endl;
     if (std::isnan(feature_mean[counter])) {
       std::cout << "feature value = " << LSTM_neurons[counter].value << std::endl;
       exit(1);
     }
+    float temp = (feature_mean[counter] - LSTM_neurons[counter].value);
+    feature_std[counter] = feature_std[counter] * 0.99999 + 0.00001 * temp * temp;
+    if (feature_std[counter] < 0.001)
+      feature_std[counter] += 0.001;
   }
 
   predictions = 0;
   for (int i = 0; i < prediction_weights.size(); i++) {
-    predictions += prediction_weights[i] * this->feature_value_layer_scaled[i];
+    predictions += prediction_weights[i] * (this->LSTM_neurons[i].value - feature_mean[i]) / sqrt(feature_std[i]);
   }
   predictions += bias;
   return predictions;
@@ -226,8 +173,7 @@ float TDLambda::get_target_without_sideeffects(std::vector<float> inputs) {
 //  Compute prediction
   float temp_prediction = 0;
   for (int i = 0; i < prediction_weights.size(); i++) {
-    //temp_prediction += prediction_weights[i] * ((hidden_state[i] - feature_mean[i]) / sqrt(feature_std[i]));
-    temp_prediction += prediction_weights[i] * feature_value_layer_scaled[i];
+    temp_prediction += prediction_weights[i] * ((hidden_state[i] - feature_mean[i]) / sqrt(feature_std[i]));
   }
   temp_prediction += bias;
 
@@ -306,43 +252,16 @@ std::vector<float> TDLambda::get_normalized_state() {
   }
   return my_vec;
 }
-
-//void TDLambda::backward() {
-//
-//  Update the prediction weights
-//  for (int index = 0; index < LSTM_neurons.size(); index++) {
-//    float gradient = prediction_weights[index] / sqrt(feature_std[index]);
-//    LSTM_neurons[index].accumulate_gradient(gradient);
-//  }
-//
-//  for (int index = 0; index < LSTM_neurons.size(); index++) {
-//    prediction_weights_gradient[index] += (LSTM_neurons[index].value - feature_mean[index]) / sqrt(feature_std[index]);
-//  }
-//
-//  bias_gradients += 1;
-//
-//}
-
 void TDLambda::backward() {
 
-  //TODO also need to adjust for constructive
-  float mean_of_dot_products = 0; // mu(zt*zt') from eq. 10
-  for (int index = 0; index < LSTM_neurons.size(); index++)
-    mean_of_dot_products += prediction_weights[index] * feature_value_layer_scaled[index];
-  mean_of_dot_products = mean_of_dot_products / LSTM_neurons.size();
-
+//  Update the prediction weights
   for (int index = 0; index < LSTM_neurons.size(); index++) {
-    float y_grad = (prediction_weights[index] - feature_value_layer_scaled[index] * mean_of_dot_products) / this->zeta; // y_t' from eq.10
-    float x_bar_grad = y_grad - (1 - a_b) * e_y[index] * feature_value_normalized[index]; // 11a
-    float x_grad = (x_bar_grad / sqrt(feature_std[index])) - (1 - a_b) * e_1[index]; // 12a (TODO: should be old std)
-    LSTM_neurons[index].accumulate_gradient(x_grad);
-
-    e_y[index] += x_bar_grad * feature_value_normalized[index]; // 11b
-    e_1[index] += x_grad; // 12b
+    float gradient = prediction_weights[index] / sqrt(feature_std[index]);
+    LSTM_neurons[index].accumulate_gradient(gradient);
   }
 
   for (int index = 0; index < LSTM_neurons.size(); index++) {
-    prediction_weights_gradient[index] += feature_value_layer_scaled[index];
+    prediction_weights_gradient[index] += (LSTM_neurons[index].value - feature_mean[index]) / sqrt(feature_std[index]);
   }
 
   bias_gradients += 1;
@@ -369,10 +288,14 @@ void TDLambda::update_parameters(int layer, float error) {
 
   for (int index = 0; index < LSTM_neurons.size(); index++) {
     if (index < (layer + 1) * layer_size) {
+      float scaling = 1;
+      if (fabs(prediction_weights_gradient[index]) > (step_size * 1000))
+        scaling = 1/10000;
 //      scaling = step_size * 10000 / prediction_weights_gradient[index];
 //    if ((layer) * layer_size <= index && index < (layer + 1) * layer_size){
 
-      prediction_weights[index] += prediction_weights_gradient[index] * error * step_size;
+      scaling = 1;
+      prediction_weights[index] += prediction_weights_gradient[index] * error * step_size * scaling;
     }
   }
 
