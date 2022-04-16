@@ -43,7 +43,8 @@ int main(int argc, char *argv[]) {
                        6 + 5 + 1,
                        1,
                        my_experiment.get_int_param("features"),
-                       my_experiment.get_int_param("width")
+                       my_experiment.get_int_param("width"),
+                       my_experiment.get_float_param("std_cap")
                        );
 
   std::cout << "Network created\n";

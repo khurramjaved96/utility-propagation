@@ -29,6 +29,7 @@ class TDLambda {
   float bias;
   float bias_gradients;
   float layer_size;
+  float std_cap;
 
 
   //  These indexes are used to do parallel computation since std::parallel does not provide rank of a thread
@@ -57,7 +58,7 @@ class TDLambda {
 
   float read_output_values();
 
-  TDLambda(float step_size, int seed, int no_of_input_features, int total_targets, int total_recurrent_features, int layer_size);
+  TDLambda(float step_size, int seed, int no_of_input_features, int total_targets, int total_recurrent_features, int layer_size, float std_cap);
 
   ~TDLambda();
 

@@ -13,9 +13,11 @@ TDLambda::TDLambda(float step_size,
                    int no_of_input_features,
                    int total_targets,
                    int total_recurrent_features,
-                   int layer_size) {
+                   int layer_size,
+                   float std_cap) {
   this->layer_size = layer_size;
   this->step_size = step_size;
+  this->std_cap = std_cap;
   this->mt.seed(seed);
   std::mt19937 second_mt(seed);
   std::uniform_real_distribution<float> weight_sampler(-0.1, 0.1);
@@ -36,7 +38,8 @@ TDLambda::TDLambda(float step_size,
                      weight_sampler(mt),
                      weight_sampler(mt),
                      weight_sampler(mt),
-                     weight_sampler(mt));
+                     weight_sampler(mt),
+                     this->std_cap);
 //    for (int counter = 0; counter < this->input_neurons.size(); counter++) {
 //      Neuron *neuron_ref = &this->input_neurons[counter];
 //      lstm_neuron.add_synapse(neuron_ref,
@@ -144,8 +147,8 @@ float TDLambda::forward(std::vector<float> inputs) {
     }
     float temp = (feature_mean[counter] - LSTM_neurons[counter].value);
     feature_std[counter] = feature_std[counter] * 0.99999 + 0.00001 * temp * temp;
-    if (feature_std[counter] < 0.001)
-      feature_std[counter] += 0.001;
+    if (feature_std[counter] < this->std_cap)
+      feature_std[counter] = this->std_cap;
   }
 
   predictions = 0;

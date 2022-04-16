@@ -14,7 +14,9 @@
 #include "../../include/utils.h"
 #include "../../include/nn/utils.h"
 
-LSTM::LSTM(float ui, float uf, float ug, float uo, float bi, float bf, float bg, float bo) : Neuron(false, false) {
+LSTM::LSTM(float ui, float uf, float ug, float uo, float bi, float bf, float bg, float bo, float std_cap) : Neuron(false, false) {
+  this->std_cap = std_cap;
+
   Hu_i = Hu_f = Hu_g = Hu_o = 0;
   Cu_i = Cu_f = Cu_g = Cu_o = 0;
   Hb_i = Hb_f = Hb_g = Hb_o = 0;
@@ -520,6 +522,8 @@ void LSTM::update_statistics() {
       float val = this->incoming_neurons[counter]->value;
       this->input_means[counter] = this->input_means[counter]*0.99999 + 0.00001*val;
       this->input_std[counter] = this->input_std[counter]*0.99999 + 0.00001*(val - this->input_means[counter])*(val - this->input_means[counter]);
+      if (this->input_std[counter] < this->std_cap)
+        this->input_std[counter] = this->std_cap;
   }
 }
 

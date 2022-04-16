@@ -112,6 +112,7 @@ class LSTM : public Neuron{
   std::vector<float> input_std;
 
 
+  float std_cap;
 
   float u_i, u_f, u_g, u_o;
   float b_i, b_f, b_g, b_o;
@@ -213,7 +214,7 @@ class LSTM : public Neuron{
 
   Synapse* recurrent_synapse;
 
-  LSTM(float ui, float uf, float ug, float uo, float bi, float bf, float bg, float bo);
+  LSTM(float ui, float uf, float ug, float uo, float bi, float bf, float bg, float bo, float std_cap);
 
   void fire();
 
