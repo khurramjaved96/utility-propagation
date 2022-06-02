@@ -273,37 +273,20 @@ void TDLambda::backward() {
 
 void TDLambda::update_parameters(int layer, float error) {
 
-//  for(int index = 0; index < LSTM_neurons.size(); index++){
-//    if(layer * layer_size > index){
-//      if(LSTM_neurons[index].frozen == false) {
-//        std::cout << "Freezing neuron with ID " << index << std::endl;
-//        std::cout << "Mean = " << LSTM_neurons[index].running_mean << " Var " << std::sqrt(LSTM_neurons[index].running_variance) << std::endl;
-//        LSTM_neurons[index].frozen = true;
-//        prediction_weights[index] = prediction_weights[index]*LSTM_neurons[index].running_variance;
-//      }
-//    }
-//  }
   for (int index = 0; index < LSTM_neurons.size(); index++) {
     if ((layer) * layer_size <= index && index < (layer + 1) * layer_size)
-      //std::cout << "Training neuron = " << index << std::endl;
       LSTM_neurons[index].update_weights(step_size, error);
   }
 
+  float total_features_for_prediction = (layer + 1) * layer_size;
   for (int index = 0; index < LSTM_neurons.size(); index++) {
     if (index < (layer + 1) * layer_size) {
-      float scaling = 1;
-      if (fabs(prediction_weights_gradient[index]) > (step_size * 1000))
-        scaling = 1/10000;
-//      scaling = step_size * 10000 / prediction_weights_gradient[index];
-//    if ((layer) * layer_size <= index && index < (layer + 1) * layer_size){
-
-      scaling = 1;
-      prediction_weights[index] += prediction_weights_gradient[index] * error * step_size * scaling;
+//      We normalize the step-size by total out-going weights that are being updated; this is necessary because as we increase the number of features in the last layer, the optimal step-size would change.
+// Since all features are normalized to have a mean of zero and variance of one, it is sufficient to just divide by total number of features
+      prediction_weights[index] += prediction_weights_gradient[index] * error * (step_size/total_features_for_prediction);
     }
   }
-
 //  bias += error * step_size * 0.001 * bias_gradients;
-
 }
 std::vector<float> TDLambda::real_all_running_mean() {
   std::vector<float> output_val;

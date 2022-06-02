@@ -14,7 +14,8 @@
 #include "../../include/utils.h"
 #include "../../include/nn/utils.h"
 
-LSTM::LSTM(float ui, float uf, float ug, float uo, float bi, float bf, float bg, float bo, float std_cap) : Neuron(false, false) {
+LSTM::LSTM(float ui, float uf, float ug, float uo, float bi, float bf, float bg, float bo, float std_cap)
+    : Neuron(false, false) {
   this->std_cap = std_cap;
 
   Hu_i = Hu_f = Hu_g = Hu_o = 0;
@@ -89,10 +90,6 @@ void LSTM::fire() {
 
 void LSTM::compute_gradient_of_all_synapses() {
   std::vector<float> x = get_normalized_values();
-//  for (auto &it: this->incoming_neurons) {
-//    x.push_back(it->value);
-//  }
-
   int n = this->incoming_neurons.size();
 
 //  Computing terms that are reused to save flops
@@ -356,7 +353,7 @@ void LSTM::update_weights(float step_size) {
   u_g += Gu_g * step_size;
 }
 
-float LSTM::get_value_without_sideeffects(){
+float LSTM::get_value_without_sideeffects() {
 
   float i_val_t, g_t, f_t, o_t;
   float old_h_t, old_c_t;
@@ -396,7 +393,6 @@ float LSTM::get_value_without_sideeffects(){
   f_t = sigmoid(f_t);
   o_t = sigmoid(o_t);
   g_t = tanh(g_t);
-
 
   float c_t = f_t * old_c_t + i_val_t * g_t;
   float h_t = o_t * tanh(c_t);
@@ -446,11 +442,9 @@ void LSTM::update_value_sync() {
   o = sigmoid(o);
   g = tanh(g);
 
-
   c = f * old_c + i_val * g;
   h = o * tanh(c);
 }
-
 
 void LSTM::update_value() {
 
@@ -493,7 +487,6 @@ void LSTM::update_value() {
   o = sigmoid(o);
   g = tanh(g);
 
-
   c = f * old_c + i_val * g;
   h = o * tanh(c);
 //  std::cout << "LSTM status " << i_val << " " << f << " " << o << " " << g << std::endl;
@@ -512,18 +505,20 @@ float LSTM::get_hidden_state() {
 std::vector<float> LSTM::get_normalized_values() {
   std::vector<float> values_ret;
   values_ret.reserve(this->incoming_neurons.size());
-  for(int counter = 0; counter < this->incoming_neurons.size(); counter++){
-    values_ret.push_back((this->incoming_neurons[counter]->value - this->input_means[counter])/sqrt(input_std[counter]));
+  for (int counter = 0; counter < this->incoming_neurons.size(); counter++) {
+    values_ret.push_back(
+        (this->incoming_neurons[counter]->value - this->input_means[counter]) / sqrt(input_std[counter]));
   }
   return values_ret;
 }
 void LSTM::update_statistics() {
-  for(int counter = 0; counter < this->incoming_neurons.size(); counter++){
-      float val = this->incoming_neurons[counter]->value;
-      this->input_means[counter] = this->input_means[counter]*0.99999 + 0.00001*val;
-      this->input_std[counter] = this->input_std[counter]*0.99999 + 0.00001*(val - this->input_means[counter])*(val - this->input_means[counter]);
-      if (this->input_std[counter] < this->std_cap)
-        this->input_std[counter] = this->std_cap;
+  for (int counter = 0; counter < this->incoming_neurons.size(); counter++) {
+    float val = this->incoming_neurons[counter]->value;
+    this->input_means[counter] = this->input_means[counter] * 0.99999 + 0.00001 * val;
+    this->input_std[counter] = this->input_std[counter] * 0.99999
+        + 0.00001 * (val - this->input_means[counter]) * (val - this->input_means[counter]);
+    if (this->input_std[counter] < this->std_cap)
+      this->input_std[counter] = this->std_cap;
   }
 }
 
