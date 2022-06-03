@@ -460,7 +460,7 @@ void DenseLSTM::zero_grad() {
 }
 
 
-void DenseLSTM::update_parameters(float error) {
+void DenseLSTM::update_parameters(int layer, float error) {
   for (int counter = 0; counter < this->prediction_weights_grad.size(); counter++)
     this->prediction_weights[counter] += this->prediction_weights_grad[counter] * error * step_size;
   for (int counter = 0; counter < W_grad.size(); counter++)

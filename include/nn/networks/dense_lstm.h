@@ -14,8 +14,9 @@
 #include "../neuron.h"
 #include "../dynamic_elem.h"
 #include "./neural_network.h"
+#include "base_lstm.h"
 
-class DenseLSTM {
+class DenseLSTM : public BaseLSTM{
  protected:
   int64_t time_step;
   std::mt19937 mt;
@@ -45,7 +46,7 @@ class DenseLSTM {
   std::vector<float> b;
   std::vector<float> b_grad;
 
-  float  get_target_without_sideeffects(std::vector<float> inputs);
+  float  get_target_without_sideeffects(std::vector<float> inputs) override;
 
   std::vector<LinearNeuron> input_neurons;
 
@@ -59,17 +60,17 @@ class DenseLSTM {
             int no_of_input_features,
             int truncation);
 
-  void zero_grad();
+  void zero_grad() override;
 
-  void decay_gradient(float decay_rate);
+  void decay_gradient(float decay_rate) override;
 
-  float forward(std::vector<float> inputs);
+  float forward(std::vector<float> inputs) override;
 
-  void backward();
+  void backward() override;
 
   std::vector<std::vector<float>> backward_with_future_grad(std::vector<std::vector<float>> grad_f, int time);
 
-  void update_parameters(float error);
+  void update_parameters(int layer, float error) override;
 
   void reset_state();
   std::vector<float> get_normalized_state();

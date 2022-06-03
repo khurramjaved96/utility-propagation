@@ -14,8 +14,9 @@
 #include "../neuron.h"
 #include "../dynamic_elem.h"
 #include "./neural_network.h"
+#include "base_lstm.h"
 
-class TDLambda {
+class TDLambda : public BaseLSTM {
  protected:
   int64_t time_step;
   std::mt19937 mt;
@@ -46,7 +47,7 @@ class TDLambda {
 
   std::vector<float> prediction_weights_gradient;
 
-  float  get_target_without_sideeffects(std::vector<float> inputs);
+  float  get_target_without_sideeffects(std::vector<float> inputs) override;
 
   std::vector<LinearNeuron> input_neurons;
 
@@ -62,15 +63,15 @@ class TDLambda {
 
   ~TDLambda();
 
-  float forward(std::vector<float> inputs);
+  float forward(std::vector<float> inputs) override;
 
-  void zero_grad();
+  void zero_grad() override;
 
-  void decay_gradient(float decay_rate);
+  void decay_gradient(float decay_rate) override;
 
-  void backward();
+  void backward() override;
 
-  void update_parameters(int layer, float error);
+  void update_parameters(int layer, float error) override;
 
   void update_parameters_no_freeze(float error);
 
