@@ -48,7 +48,7 @@ DenseLSTMRmsProp::DenseLSTMRmsProp(float step_size,
 void DenseLSTMRmsProp::update_parameters(int layer, float error) {
 //  std::cout << "Being called\n";
   for (int counter = 0; counter < this->prediction_weights_grad.size(); counter++) {
-    n[counter] = prediction_weights_grad_rmsprop[counter] * beta_2
+    prediction_weights_grad_rmsprop[counter] = prediction_weights_grad_rmsprop[counter] * beta_2
         + (1 - beta_2) * (this->prediction_weights_grad[counter] * error)
             * (this->prediction_weights_grad[counter] * error);
     this->prediction_weights[counter] +=
