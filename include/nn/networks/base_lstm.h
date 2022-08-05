@@ -5,6 +5,7 @@
 #ifndef INCLUDE_NN_NETWORKS_BASE_LSTM_H_
 #define INCLUDE_NN_NETWORKS_BASE_LSTM_H_
 
+#include <vector>
 
 class BaseLSTM {
  public:

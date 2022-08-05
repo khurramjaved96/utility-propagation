@@ -288,7 +288,8 @@ void TDLambda::update_parameters(int layer, float error) {
   }
 //  bias += error * step_size * 0.001 * bias_gradients;
 }
-std::vector<float> TDLambda::real_all_running_mean() {
+std::vector<
+    float> TDLambda::real_all_running_mean() {
   std::vector<float> output_val;
   output_val.reserve(this->input_neurons.size() + this->LSTM_neurons.size());
 //  Store input values

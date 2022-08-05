@@ -1,6 +1,6 @@
 {
   "experiment": {
-    "name": "columnar_long_time_constructive_with_norm_new_sweep",
+    "name": "atari_tbptt_",
     "params": {
       "seed": [
         "0",
@@ -22,42 +22,34 @@
         "16",
         "17",
         "18",
-        "19",
-        "20",
-        "21",
-        "22",
-        "23",
-        "24",
-        "25",
-        "26",
-        "27",
-        "28",
-        "29"
+        "19"
       ],
       "steps": [
         "50000000"
       ],
-      "features": [
-        "10"
+      "input_features": [
+        "256"
+      ],
+      "environment_proto": [
+        "environment_proto_files/FreewayNoFrameskip-v4.proto"
       ],
       "algorithm": [
         {
-          "constructive": {}
+          "tbptt": {
+            "features_truncation": [
+              "30:2",
+              "8:7",
+              "2:13"
+            ]
+          }
         }
       ],
       "step_size": [
-        "0.3",
         "0.1",
-        "0.03",
         "0.01",
-        "0.003",
-        "0.001"
-      ],
-      "start": [
-        "0"
-      ],
-      "width": [
-        "1"
+        "0.001",
+        "0.0001",
+        "0.00001"
       ],
       "freq": [
         "5000000"
@@ -65,10 +57,8 @@
       "lambda": [
         "0.99"
       ],
-      "std_cap": [
-        "0.1",
-        "0.01",
-        "0.001"
+      "gamma": [
+        "0.98"
       ]
     }
   }

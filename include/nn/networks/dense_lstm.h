@@ -70,10 +70,27 @@ class DenseLSTM : public BaseLSTM{
 
   std::vector<std::vector<float>> backward_with_future_grad(std::vector<std::vector<float>> grad_f, int time);
 
-  void update_parameters(int layer, float error) override;
+  void virtual update_parameters(int layer, float error) override;
 
   void reset_state();
   std::vector<float> get_normalized_state();
+
+};
+
+class DenseLSTMRmsProp : public  DenseLSTM{
+  std::vector<float> W_grad_rmsprop;
+  std::vector<float> U_grad_rmsprop;
+  std::vector<float> b_grad_rmsprop;
+  std::vector<float> prediction_weights_grad_rmsprop;
+  float beta_2;
+  float epsilon;
+ public:
+  DenseLSTMRmsProp(float step_size,
+                   int seed,
+                   int hidden_size,
+                   int no_of_input_features,
+                   int truncation, float beta_2, float epsilon);
+  void update_parameters(int layer, float error) override;
 
 };
 

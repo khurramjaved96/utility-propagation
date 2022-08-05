@@ -1,0 +1,60 @@
+{
+  "experiment": {
+    "name": "atari_tbptt_rmsprop_seeds_fixed_2",
+    "params": {
+      "seed": [
+        "0"
+      ],
+
+      "steps": [
+        "50000000"
+      ],
+      "input_features": [
+        "256"
+      ],
+      "environment_proto": [
+        "environment_proto_files/FreewayNoFrameskip-v4.proto"
+      ],
+      "algorithm": [
+        {
+          "tbptt_rmsprop": {
+            "features_truncation": [
+              "30:2", "2:13"
+            ],
+            "beta_2": [
+              "0.9999"
+            ],
+            "eps": [
+              "1e-20"
+            ]
+          }
+        }
+      ],
+      "step_size": [
+        "0.1",
+        "0.01",
+        "0.001",
+        "0.0001",
+        "0.00001"
+      ],
+      "start": [
+        "0"
+      ],
+      "width": [
+        "5"
+      ],
+      "freq": [
+        "5000000"
+      ],
+      "lambda": [
+        "0.99"
+      ],
+      "gamma": [
+        "0.98"
+      ],
+      "std_cap": [
+        "0.1"
+      ]
+    }
+  }
+}

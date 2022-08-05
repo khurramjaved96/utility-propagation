@@ -16,6 +16,72 @@
 #include "../../../include/nn/utils.h"
 #include <random>
 
+DenseLSTMRmsProp::DenseLSTMRmsProp(float step_size,
+                                   int seed,
+                                   int hidden_size,
+                                   int no_of_input_features,
+                                   int truncation, float beta_2, float epsilon) : DenseLSTM(step_size,
+                                                                                            seed,
+                                                                                            hidden_size,
+                                                                                            no_of_input_features,
+                                                                                            truncation) {
+  this->beta_2 = beta_2;
+  this->epsilon = epsilon;
+  for (int outer_counter = 0; outer_counter < hidden_size; outer_counter++) {
+    for (int inner_counter = 0; inner_counter < input_size * 4; inner_counter++) {
+      this->W_grad_rmsprop.push_back(1);
+    }
+    for (int outer_counter = 0; outer_counter < hidden_size; outer_counter++) {
+      for (int inner_counter = 0; inner_counter < hidden_size * 4; inner_counter++) {
+        this->U_grad_rmsprop.push_back(1);
+      }
+    }
+    for (int outer_counter = 0; outer_counter < hidden_size * 4; outer_counter++) {
+      this->b_grad_rmsprop.push_back(1);
+    }
+    for (int counter = 0; counter < hidden_size; counter++) {
+      this->prediction_weights_grad_rmsprop.push_back(1);
+    }
+  }
+}
+
+void DenseLSTMRmsProp::update_parameters(int layer, float error) {
+//  std::cout << "Being called\n";
+  for (int counter = 0; counter < this->prediction_weights_grad.size(); counter++) {
+    n[counter] = prediction_weights_grad_rmsprop[counter] * beta_2
+        + (1 - beta_2) * (this->prediction_weights_grad[counter] * error)
+            * (this->prediction_weights_grad[counter] * error);
+    this->prediction_weights[counter] +=
+        (step_size * error  * this->prediction_weights_grad[counter])
+            / (sqrt(prediction_weights_grad_rmsprop[counter]) + this->epsilon);
+  }
+  for (int counter = 0; counter < W_grad.size(); counter++) {
+    W_grad_rmsprop[counter] =
+        W_grad_rmsprop[counter] * beta_2 + (1 - beta_2) * (W_grad[counter] * error) * (W_grad[counter] * error);
+    W[counter] += step_size * error * W_grad[counter] / (sqrt(W_grad_rmsprop[counter]) + this->epsilon);
+  }
+  for (int counter = 0; counter < U_grad.size(); counter++) {
+    U_grad_rmsprop[counter] =
+        U_grad_rmsprop[counter] * beta_2 + (1 - beta_2) * (U_grad[counter] * error) * (U_grad[counter] * error);
+    U[counter] += step_size * error * U_grad[counter] / (sqrt(U_grad_rmsprop[counter]) + this->epsilon);
+  }
+  for (int counter = 0; counter < b_grad.size(); counter++) {
+    b_grad_rmsprop[counter] =
+        b_grad_rmsprop[counter] * beta_2 + (1 - beta_2) * (b_grad[counter] * error) * (b_grad[counter] * error);
+    b[counter] += step_size * error * b_grad[counter] / (sqrt(b_grad_rmsprop[counter]) + this->epsilon);
+  }
+
+  for(int c = 0; c < 2; c++) {
+    std::cout << "C = " << c << std::endl;
+    std::cout << "Prediction grad " << error * prediction_weights_grad[c] << std::endl;
+    std::cout << "Normalizing val = " << (sqrt(prediction_weights_grad_rmsprop[c])) << std::endl;
+//  std::cout << "Grad = " << (error * prediction_weights_grad[0])*(error * prediction_weights_grad[0]) << std::endl;
+    std::cout << "Normalized grad = "
+              << (error * prediction_weights_grad[c]) / (sqrt(prediction_weights_grad_rmsprop[c]) + this->epsilon)
+              << std::endl;
+  }
+}
+//
 DenseLSTM::DenseLSTM(float step_size,
                      int seed,
                      int hidden_size,
@@ -44,7 +110,7 @@ DenseLSTM::DenseLSTM(float step_size,
     this->prediction_weights_grad.push_back(0);
   }
 
-  std::uniform_real_distribution<float> weight_sampler( -sqrt(1.0/float(hidden_size)), sqrt(1.0/float(hidden_size)));
+  std::uniform_real_distribution<float> weight_sampler(-sqrt(1.0 / float(hidden_size)), sqrt(1.0 / float(hidden_size)));
   for (int outer_counter = 0; outer_counter < hidden_size; outer_counter++) {
     std::vector<float> temp_weight_vector;
     for (int inner_counter = 0; inner_counter < input_size * 4; inner_counter++) {
@@ -253,8 +319,8 @@ float DenseLSTM::forward(std::vector<float> inputs) {
   for (int h_index = 0; h_index < this->hidden_state_size; h_index++) {
     c_queue[t][h_index] = f_queue[t][h_index] * c_queue[t_1][h_index] + i_queue[t][h_index] * g_queue[t][h_index];
     h_queue[t][h_index] = o_queue[t][h_index] * tanh(c_queue[t][h_index]);
-    if(std::isnan(h_queue[t][h_index])){
-      for(int it = 0; it < truncation; it ++){
+    if (std::isnan(h_queue[t][h_index])) {
+      for (int it = 0; it < truncation; it++) {
         std::cout << "T = " << it << ": ";
         print_vector(h_queue[t]);
       }
@@ -293,9 +359,9 @@ void DenseLSTM::backward() {
   int t = (this->time_step - 1) % truncation;
   auto h_cur = h_queue[t];
   for (int counter = 0; counter < h_cur.size(); counter++) {
-    if(std::isnan(h_cur[counter])){
+    if (std::isnan(h_cur[counter])) {
       print_vector(h_cur);
-      for(int it = 0; it < truncation; it ++){
+      for (int it = 0; it < truncation; it++) {
         std::cout << "T = " << it << ": ";
         print_vector(h_queue[t]);
       }
@@ -447,18 +513,16 @@ void DenseLSTM::decay_gradient(float decay_rate) {
     b_grad[counter] *= decay_rate;
 }
 
-
 void DenseLSTM::zero_grad() {
   for (int counter = 0; counter < this->prediction_weights_grad.size(); counter++)
     this->prediction_weights_grad[counter] = 0;
   for (int counter = 0; counter < W_grad.size(); counter++)
     W_grad[counter] = 0;
   for (int counter = 0; counter < U_grad.size(); counter++)
-    U_grad[counter]  = 0;
+    U_grad[counter] = 0;
   for (int counter = 0; counter < b_grad.size(); counter++)
     b_grad[counter] = 0;
 }
-
 
 void DenseLSTM::update_parameters(int layer, float error) {
   for (int counter = 0; counter < this->prediction_weights_grad.size(); counter++)
