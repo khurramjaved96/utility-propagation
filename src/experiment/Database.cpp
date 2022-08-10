@@ -142,7 +142,7 @@ int Database::add_rows_to_table(const std::string &database_name, const std::str
   using std::chrono::system_clock;
   std::mt19937 mt;
   std::uniform_int_distribution<int> time_sampler(50, 3000);
-  while (return_val && failures < 100) {
+  while (return_val && failures < 10) {
     this->connect_and_use(database_name);
     return_val = mysql_query(this->mysql, &query[0]);
     if(return_val == 0 || return_val == 1) // it returns 1 on success for me ¯\_(ツ)_/¯
@@ -174,24 +174,25 @@ Database::add_row_to_table(const std::string &database_name, const std::string &
 int Database::make_table(const std::string &database_name, const std::string &table, std::vector<std::string> keys,
                          std::vector<std::string> types,
                          std::vector<std::string> index_columns) {
-  if (this->connect() == 0) {
-    std::string query;
-    query = "CREATE TABLE " + table + " (";
-    if (keys.size() != types.size()) {
-      std::cout << "SQL number of columns and number of types are not equal\n";
-      exit(1);
-    }
-    for (int counter = 0; counter < keys.size(); counter++) {
-      query += " " + keys[counter] + " " + types[counter] + ",";
-    }
-    query = query + " PRIMARY KEY(";
-    for (int counter = 0; counter < index_columns.size() - 1; counter++) {
-      query += " " + index_columns[counter] + " ,";
-    }
-    query = query + " " + index_columns[index_columns.size() - 1] + " ));";
-    std::cout << "Creating table: " << query << std::endl;
-    this->run_query(query, database_name);
+
+  std::string query;
+  query = "CREATE TABLE " + table + " (";
+  if (keys.size() != types.size()) {
+    std::cout << "SQL number of columns and number of types are not equal\n";
+    exit(1);
   }
+  for (int counter = 0; counter < keys.size(); counter++) {
+    query += " " + keys[counter] + " " + types[counter] + ",";
+  }
+  query = query + " PRIMARY KEY(";
+  for (int counter = 0; counter < index_columns.size() - 1; counter++) {
+    query += " " + index_columns[counter] + " ,";
+  }
+  query = query + " " + index_columns[index_columns.size() - 1] + " ));";
+  std::cout << "Creating table: " << query << std::endl;
+  this->run_query(query, database_name);
+  mysql_close(this->mysql);
+
   return 1;
 }
 

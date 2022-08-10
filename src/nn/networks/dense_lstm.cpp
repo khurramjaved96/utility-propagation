@@ -71,15 +71,15 @@ void DenseLSTMRmsProp::update_parameters(int layer, float error) {
     b[counter] += step_size * error * b_grad[counter] / (sqrt(b_grad_rmsprop[counter]) + this->epsilon);
   }
 
-  for(int c = 0; c < 2; c++) {
-    std::cout << "C = " << c << std::endl;
-    std::cout << "Prediction grad " << error * prediction_weights_grad[c] << std::endl;
-    std::cout << "Normalizing val = " << (sqrt(prediction_weights_grad_rmsprop[c])) << std::endl;
-//  std::cout << "Grad = " << (error * prediction_weights_grad[0])*(error * prediction_weights_grad[0]) << std::endl;
-    std::cout << "Normalized grad = "
-              << (error * prediction_weights_grad[c]) / (sqrt(prediction_weights_grad_rmsprop[c]) + this->epsilon)
-              << std::endl;
-  }
+//  for(int c = 0; c < 2; c++) {
+//    std::cout << "C = " << c << std::endl;
+//    std::cout << "Prediction grad " << error * prediction_weights_grad[c] << std::endl;
+//    std::cout << "Normalizing val = " << (sqrt(prediction_weights_grad_rmsprop[c])) << std::endl;
+////  std::cout << "Grad = " << (error * prediction_weights_grad[0])*(error * prediction_weights_grad[0]) << std::endl;
+//    std::cout << "Normalized grad = "
+//              << (error * prediction_weights_grad[c]) / (sqrt(prediction_weights_grad_rmsprop[c]) + this->epsilon)
+//              << std::endl;
+//  }
 }
 //
 DenseLSTM::DenseLSTM(float step_size,

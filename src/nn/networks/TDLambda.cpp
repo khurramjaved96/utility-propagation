@@ -116,11 +116,9 @@ TDLambda::TDLambda(float step_size,
 }
 
 float TDLambda::forward(std::vector<float> inputs) {
-//  Set input neurons value
-//  if(this->time_step%100000 == 99999)
-//    this->step_size *= 0.8;
+
   for (int i = 0; i < inputs.size(); i++) {
-    this->input_neurons[i].value = inputs[i];
+    this->input_neurons.at(i).value = inputs[i];
   }
 
   for (int counter = 0; counter < LSTM_neurons.size(); counter++) {
@@ -283,7 +281,8 @@ void TDLambda::update_parameters(int layer, float error) {
     if (index < (layer + 1) * layer_size) {
 //      We normalize the step-size by total out-going weights that are being updated; this is necessary because as we increase the number of features in the last layer, the optimal step-size would change.
 // Since all features are normalized to have a mean of zero and variance of one, it is sufficient to just divide by total number of features
-      prediction_weights[index] += prediction_weights_gradient[index] * error * (step_size/total_features_for_prediction);
+      prediction_weights[index] +=
+          prediction_weights_gradient[index] * error * (step_size / total_features_for_prediction);
     }
   }
 //  bias += error * step_size * 0.001 * bias_gradients;
@@ -293,10 +292,10 @@ std::vector<
   std::vector<float> output_val;
   output_val.reserve(this->input_neurons.size() + this->LSTM_neurons.size());
 //  Store input values
-  for (auto n : this->input_neurons)
+  for (auto n: this->input_neurons)
     output_val.push_back(n.running_mean);
 //  Store other values
-  for (auto n : this->LSTM_neurons)
+  for (auto n: this->LSTM_neurons)
     output_val.push_back(n.running_mean);
   return output_val;
 }
@@ -305,10 +304,10 @@ std::vector<float> TDLambda::read_all_running_variance() {
   std::vector<float> output_val;
   output_val.reserve(this->input_neurons.size() + this->LSTM_neurons.size());
 //  Store input values
-  for (auto n : this->input_neurons)
+  for (auto n: this->input_neurons)
     output_val.push_back(n.running_variance);
 //  Store other values
-  for (auto n : this->LSTM_neurons)
+  for (auto n: this->LSTM_neurons)
     output_val.push_back(n.running_variance);
   return output_val;
 }

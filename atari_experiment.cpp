@@ -32,9 +32,9 @@ int main(int argc, char *argv[]) {
                                std::vector<std::string>{"run", "step"});
 
   Metric avg_error = Metric(my_experiment->database_name, "predictions",
-                            std::vector<std::string>{"run", "step", "x0", "x1", "x2", "x3", "x4", "x5", "x6", "pred",
-                                                     "target"},
-                            std::vector<std::string>{"int", "int", "real", "real", "real", "real", "real", "real",
+                            std::vector<std::string>{"run", "step", "pred",
+                                                     "target", "reward"},
+                            std::vector<std::string>{"int", "int",
                                                      "real", "real", "real"},
                             std::vector<std::string>{"run", "step"});
 //  Metric network->state = Metric(my_experiment->database_name, "network->state",
@@ -81,11 +81,9 @@ int main(int argc, char *argv[]) {
       std::vector<std::string> cur_error;
       cur_error.push_back(std::to_string(my_experiment->get_int_param("run")));
       cur_error.push_back(std::to_string(i));
-      for (int inner_c = 0; inner_c < 7; inner_c++) {
-        cur_error.push_back(std::to_string(x[inner_c]));
-      }
       cur_error.push_back(std::to_string(pred));
       cur_error.push_back(std::to_string(real_target));
+      cur_error.push_back(std::to_string(env.get_reward()));
       avg_error.record_value(cur_error);
     }
 
