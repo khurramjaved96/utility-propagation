@@ -3,7 +3,11 @@
     "name": "atari_tbptt_all_env_clipped_actions",
     "params": {
       "seed": [
-        "0"
+        "0",
+        "1",
+        "2",
+        "3",
+        "4"
       ],
       "steps": [
         "50000000"
