@@ -102,9 +102,9 @@ add_executable(Count include/json.hpp include/utils.h src/utils.cpp include/expe
 #
 #set_property(TARGET FlexibleNN PROPERTY CXX_STANDARD 14)
 
-target_link_libraries(NPYTest PUBLIC protobuf)
-target_link_libraries(NPYTest PUBLIC tbb)
-target_link_libraries(NPYTest PUBLIC mariadb)
+target_link_libraries(AtariExperiment PUBLIC protobuf)
+target_link_libraries(AtariExperiment PUBLIC tbb)
+target_link_libraries(AtariExperiment PUBLIC mariadb)
 #
 
 #target_link_libraries(Snap1 PUBLIC tbb)
