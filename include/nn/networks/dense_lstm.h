@@ -31,6 +31,8 @@ class DenseLSTM : public BaseLSTM{
   std::vector<float> prediction_weights;
   std::vector<float> prediction_weights_grad;
 
+  void print_features_stats() override;
+
   std::vector<std::vector<float>> x_queue;
   std::vector<std::vector<float>> h_queue;
   std::vector<std::vector<float>> c_queue;

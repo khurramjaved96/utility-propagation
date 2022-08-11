@@ -53,6 +53,8 @@ class TDLambda : public BaseLSTM {
 
   std::vector<LSTM> LSTM_neurons;
 
+  void print_features_stats() override;
+
   std::vector<float> real_all_running_mean();
 
   std::vector<float> read_all_running_variance();

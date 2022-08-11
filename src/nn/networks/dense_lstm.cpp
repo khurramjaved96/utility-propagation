@@ -16,6 +16,8 @@
 #include "../../../include/nn/utils.h"
 #include <random>
 
+void DenseLSTM::print_features_stats() {}
+
 DenseLSTMRmsProp::DenseLSTMRmsProp(float step_size,
                                    int seed,
                                    int hidden_size,

@@ -60,7 +60,7 @@ TDLambda::TDLambda(float step_size,
     std::vector<int> map_index(no_of_input_features + total_recurrent_features, 0);
     int counter_temp_temp = 0;
     int temp_counter = 0;
-    while (temp_counter < 5000) {
+    while (temp_counter < 10000) {
       temp_counter++;
 //    while (counter_temp_temp < 4000) {
       counter_temp_temp++;
@@ -114,6 +114,14 @@ TDLambda::TDLambda(float step_size,
     feature_std.push_back(1);
   }
 }
+void TDLambda::print_features_stats() {
+  for (int counter = 0; counter < LSTM_neurons.size(); counter++) {
+    std::cout << "Counter = " << counter << std::endl;
+    std::cout << "Feature mean = " << feature_mean[counter] << std::endl;
+    std::cout << "Feature std = " << feature_std[counter] << std::endl;
+    std::cout << "feature value = " << LSTM_neurons[counter].value << std::endl;
+  }
+}
 
 float TDLambda::forward(std::vector<float> inputs) {
 
@@ -140,6 +148,8 @@ float TDLambda::forward(std::vector<float> inputs) {
     feature_mean[counter] = feature_mean[counter] * 0.99999 + 0.00001 * LSTM_neurons[counter].value;
 //    std::cout << "Feature mean = " << feature_mean[counter] << std::endl;
     if (std::isnan(feature_mean[counter])) {
+      std::cout << "Feature mean = " << feature_mean[counter] << std::endl;
+      std::cout << "Feature std = " << feature_std[counter] << std::endl;
       std::cout << "feature value = " << LSTM_neurons[counter].value << std::endl;
       exit(1);
     }
@@ -285,7 +295,7 @@ void TDLambda::update_parameters(int layer, float error) {
           prediction_weights_gradient[index] * error * (step_size / total_features_for_prediction);
     }
   }
-//  bias += error * step_size * 0.001 * bias_gradients;
+  bias += error * step_size * bias_gradients;
 }
 std::vector<
     float> TDLambda::real_all_running_mean() {

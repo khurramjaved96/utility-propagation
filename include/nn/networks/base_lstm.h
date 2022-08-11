@@ -15,6 +15,7 @@ class BaseLSTM {
 
   BaseLSTM(){};
 
+  virtual void print_features_stats() = 0;
 
   virtual float forward(std::vector<float> inputs) = 0;
 
