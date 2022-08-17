@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
     float real_error = (real_target - pred) * (real_target - pred);
     running_error = running_error * 0.99999 + 0.00001 * real_error;
     network->decay_gradient(my_experiment->get_float_param("lambda") * env.get_gamma());
-    network->backward();
+    network->backward(layer);
     network->update_parameters(layer, error);
     if (i % 200000 == 0) {
       std::vector<std::string> cur_error;

@@ -349,7 +349,7 @@ std::vector<float> DenseLSTM::get_normalized_state() {
   return my_vec;
 }
 
-void DenseLSTM::backward() {
+void DenseLSTM::backward(int layer) {
 
 //  For the last step, only gradient from the prediction flows backwards
   std::vector<std::vector<float>> initial_grad;

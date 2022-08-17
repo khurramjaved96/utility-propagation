@@ -94,6 +94,7 @@ TDLambda::TDLambda(float step_size,
         }
       }
     }
+
   }
   for (int counter = 0; counter < this->LSTM_neurons.size(); counter++) {
     for (int inner_counter = 0; inner_counter < this->LSTM_neurons[counter].incoming_neurons.size(); inner_counter++) {
@@ -114,6 +115,114 @@ TDLambda::TDLambda(float step_size,
     feature_std.push_back(1);
   }
 }
+
+TDLambda::TDLambda() {}
+
+Snap1::Snap1(float step_size,
+             int seed,
+             int no_of_input_features,
+             int total_targets,
+             int total_recurrent_features,
+             int layer_size,
+             float std_cap) {
+  this->layer_size = layer_size;
+  this->step_size = step_size;
+  this->std_cap = std_cap;
+  this->mt.seed(seed);
+  std::mt19937 second_mt(seed);
+  std::uniform_real_distribution<float> weight_sampler(-0.1, 0.1);
+  std::uniform_real_distribution<float> prob_sampler(0, 1);
+  std::uniform_int_distribution<int> index_sampler(0, no_of_input_features + total_recurrent_features - 1);
+
+  for (int i = 0; i < no_of_input_features; i++) {
+    LinearNeuron n(true, false);
+    this->input_neurons.push_back(n);
+  }
+
+  for (int i = 0; i < total_recurrent_features; i++) {
+//    std::cout << "Recurrent feature no "<< i << std::endl;
+    LSTM lstm_neuron(weight_sampler(mt),
+                     weight_sampler(mt),
+                     weight_sampler(mt),
+                     weight_sampler(mt),
+                     weight_sampler(mt),
+                     weight_sampler(mt),
+                     weight_sampler(mt),
+                     weight_sampler(mt),
+                     this->std_cap);
+//    for (int counter = 0; counter < this->input_neurons.size(); counter++) {
+//      Neuron *neuron_ref = &this->input_neurons[counter];
+//      lstm_neuron.add_synapse(neuron_ref,
+//                              weight_sampler(mt),
+//                              weight_sampler(mt),
+//                              weight_sampler(mt),
+//                              weight_sampler(mt));
+//    }
+    indexes_lstm_cells.push_back(i);
+    this->LSTM_neurons.push_back(lstm_neuron);
+  }
+
+  for (int counter = 0; counter < total_recurrent_features; counter++) {
+    int incoming_features = 0;
+    std::vector<int> map_index(no_of_input_features + total_recurrent_features, 0);
+    int counter_temp_temp = 0;
+    int temp_counter = 0;
+    while (temp_counter < 10000) {
+      temp_counter++;
+//    while (counter_temp_temp < 4000) {
+      counter_temp_temp++;
+      int index = index_sampler(second_mt);
+      if (map_index[index] == 0) {
+        map_index[index] = 1;
+        if (index < no_of_input_features) {
+//          std::cout << "Inp " << index << "\t" << counter << std::endl;
+          incoming_features++;
+          Neuron *neuron_ref = &this->input_neurons[index];
+          LSTM_neurons[counter].add_synapse(neuron_ref,
+                                            weight_sampler(mt),
+                                            weight_sampler(mt),
+                                            weight_sampler(mt),
+                                            weight_sampler(mt));
+        } else {
+          index = index - no_of_input_features;
+          incoming_features++;
+          Neuron *neuron_ref = &this->LSTM_neurons[index];
+          //TODO making it single layer
+          //Neuron *neuron_ref = &this->input_neurons[index];
+          LSTM_neurons[counter].add_synapse(neuron_ref,
+                                            weight_sampler(mt),
+                                            weight_sampler(mt),
+                                            weight_sampler(mt),
+                                            weight_sampler(mt));
+//          }
+        }
+      }
+    }
+    int sum_temp = 0;
+    for(int i = 0; i < map_index.size(); i++)
+      sum_temp += map_index[i];
+    std::cout << "Sum temp = " << sum_temp << std::endl;
+  }
+//  for (int counter = 0; counter < this->LSTM_neurons.size(); counter++) {
+//    for (int inner_counter = 0; inner_counter < this->LSTM_neurons[counter].incoming_neurons.size(); inner_counter++) {
+//      std::cout << this->LSTM_neurons[counter].incoming_neurons[inner_counter]->id << "\tto\t"
+//                << this->LSTM_neurons[counter].id << std::endl;
+//    }
+//  }
+//  exit(1);
+
+  predictions = 0;
+  bias = 0;
+  bias_gradients = 0;
+  for (int j = 0; j < this->LSTM_neurons.size(); j++) {
+    prediction_weights.push_back(0);
+    prediction_weights_gradient.push_back(0);
+    avg_feature_value.push_back(0);
+    feature_mean.push_back(0);
+    feature_std.push_back(1);
+  }
+}
+
 void TDLambda::print_features_stats() {
   for (int counter = 0; counter < LSTM_neurons.size(); counter++) {
     std::cout << "Counter = " << counter << std::endl;
@@ -133,9 +242,9 @@ float TDLambda::forward(std::vector<float> inputs) {
     LSTM_neurons[counter].update_value_sync();
   }
 
-  for (int counter = 0; counter < LSTM_neurons.size(); counter++) {
-    LSTM_neurons[counter].compute_gradient_of_all_synapses();
-  }
+//  for (int counter = 0; counter < LSTM_neurons.size(); counter++) {
+//    LSTM_neurons[counter].compute_gradient_of_all_synapses();
+//  }
 
   for (int counter = 0; counter < LSTM_neurons.size(); counter++) {
     LSTM_neurons[counter].fire();
@@ -263,10 +372,30 @@ std::vector<float> TDLambda::get_normalized_state() {
   }
   return my_vec;
 }
-void TDLambda::backward() {
+void TDLambda::backward(int layer) {
 
 //  Update the prediction weights
   for (int index = 0; index < LSTM_neurons.size(); index++) {
+    if ((layer) * layer_size <= index && index < (layer + 1) * layer_size) {
+      LSTM_neurons[index].compute_gradient_of_all_synapses();
+      float gradient = prediction_weights[index] / sqrt(feature_std[index]);
+      LSTM_neurons[index].accumulate_gradient(gradient);
+    }
+  }
+
+  for (int index = 0; index < LSTM_neurons.size(); index++) {
+    prediction_weights_gradient[index] += (LSTM_neurons[index].value - feature_mean[index]) / sqrt(feature_std[index]);
+  }
+
+  bias_gradients += 1;
+
+}
+
+void Snap1::backward(int layer) {
+
+//  Update the prediction weights
+  for (int index = 0; index < LSTM_neurons.size(); index++) {
+    LSTM_neurons[index].compute_gradient_of_all_synapses();
     float gradient = prediction_weights[index] / sqrt(feature_std[index]);
     LSTM_neurons[index].accumulate_gradient(gradient);
   }
@@ -286,17 +415,30 @@ void TDLambda::update_parameters(int layer, float error) {
       LSTM_neurons[index].update_weights(step_size, error);
   }
 
-  float total_features_for_prediction = (layer + 1) * layer_size;
   for (int index = 0; index < LSTM_neurons.size(); index++) {
     if (index < (layer + 1) * layer_size) {
 //      We normalize the step-size by total out-going weights that are being updated; this is necessary because as we increase the number of features in the last layer, the optimal step-size would change.
 // Since all features are normalized to have a mean of zero and variance of one, it is sufficient to just divide by total number of features
-      prediction_weights[index] +=
-          prediction_weights_gradient[index] * error * (step_size / total_features_for_prediction);
+      prediction_weights[index] += prediction_weights_gradient[index] * error * (step_size);
     }
   }
   bias += error * step_size * bias_gradients;
 }
+
+void Snap1::update_parameters(int layer, float error) {
+
+  for (int index = 0; index < LSTM_neurons.size(); index++) {
+    LSTM_neurons[index].update_weights(step_size, error);
+  }
+
+  float total_features_for_prediction = (layer + 1) * layer_size;
+  for (int index = 0; index < LSTM_neurons.size(); index++) {
+    prediction_weights[index] += prediction_weights_gradient[index] * error * (step_size/total_features_for_prediction);
+  }
+  bias += error * step_size * bias_gradients;
+}
+
+//
 std::vector<
     float> TDLambda::real_all_running_mean() {
   std::vector<float> output_val;

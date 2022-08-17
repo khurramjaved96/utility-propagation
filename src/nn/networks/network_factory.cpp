@@ -39,6 +39,15 @@ BaseLSTM* NetworkFactory::get_network(Experiment* experiment_config){
                            experiment_config->get_int_param("width"),
                            experiment_config->get_float_param("std_cap"));
   }
+  else if (experiment_config->get_string_param("algorithm") == "snap") {
+    network = new Snap1(experiment_config->get_float_param("step_size"),
+                           experiment_config->get_int_param("seed"),
+                           experiment_config->get_int_param("input_features"),
+                           1,
+                           experiment_config->get_int_param("features"),
+                           experiment_config->get_int_param("width"),
+                           experiment_config->get_float_param("std_cap"));
+  }
   else if (experiment_config->get_string_param("algorithm") == "tbptt") {
     network = new DenseLSTM(experiment_config->get_float_param("step_size"),
                             experiment_config->get_int_param("seed"),

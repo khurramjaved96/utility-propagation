@@ -11,6 +11,7 @@
 #include "include/nn/utils.h"
 #include "include/experiment/Metric.h"
 #include <string>
+#include "include/nn/networks/network_factory.h"
 #include "include/nn/networks/base_lstm.h"
 #include "include/environments/animal_learning/tracecondioning.h"
 
@@ -43,41 +44,7 @@ int main(int argc, char *argv[]) {
   std::pair<int, int> ITI{80, 120};
   TracePatterning env = TracePatterning(ISI, ITI, 5, my_experiment->get_int_param("seed"));
 
-  BaseLSTM *network;
-  if (my_experiment->get_string_param("algorithm") == "constructive") {
-    network = new TDLambda(my_experiment->get_float_param("step_size"),
-                           my_experiment->get_int_param("seed"),
-                           6 + 5 + 1,
-                           1,
-                           my_experiment->get_int_param("features"),
-                           1,
-                           my_experiment->get_float_param("std_cap"));
-  }
-  else if (my_experiment->get_string_param("algorithm") == "columnar") {
-    network = new TDLambda(my_experiment->get_float_param("step_size"),
-                           my_experiment->get_int_param("seed"),
-                           6 + 5 + 1,
-                           1,
-                           my_experiment->get_int_param("features"),
-                           my_experiment->get_int_param("features"),
-                           my_experiment->get_float_param("std_cap"));
-  }
-  else if (my_experiment->get_string_param("algorithm") == "hybrid") {
-    network = new TDLambda(my_experiment->get_float_param("step_size"),
-                           my_experiment->get_int_param("seed"),
-                           6 + 5 + 1,
-                           1,
-                           my_experiment->get_int_param("features"),
-                           my_experiment->get_int_param("width"),
-                           my_experiment->get_float_param("std_cap"));
-  }
-  else if (my_experiment->get_string_param("algorithm") == "tbptt") {
-    network = new DenseLSTM(my_experiment->get_float_param("step_size"),
-                            my_experiment->get_int_param("seed"),
-                            my_experiment->get_int_param("features"),
-                            6 + 5 + 1,
-                            my_experiment->get_int_param("truncation"));
-  }
+  BaseLSTM *network = NetworkFactory::get_network(my_experiment);
 
   std::cout << "Network created\n";
   float running_error = 0.05;
@@ -90,7 +57,7 @@ int main(int argc, char *argv[]) {
       std::cout << "Increasing layer\n";
     }
 
-    float gamma = 0.9;
+    float gamma = 0.90;
     float pred = network->forward(x);
     float real_target = env.get_target(gamma);
 
@@ -113,7 +80,7 @@ int main(int argc, char *argv[]) {
     float real_error = (real_target - pred) * (real_target - pred);
     running_error = running_error * 0.99999 + 0.00001 * real_error;
     network->decay_gradient(my_experiment->get_float_param("lambda") * gamma);
-    network->backward();
+    network->backward(layer);
     network->update_parameters(layer, error);
     if (i % 50000 == 20000) {
       std::vector<std::string> cur_error;
@@ -122,7 +89,7 @@ int main(int argc, char *argv[]) {
       cur_error.push_back(std::to_string(running_error));
       error_metric.record_value(cur_error);
     }
-
+//
     if (i % 500000 == 0) {
       std::cout << "Step = " << i << " Error = " << running_error << std::endl;
       error_metric.commit_values();
