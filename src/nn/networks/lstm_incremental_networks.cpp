@@ -5,16 +5,16 @@
 #include <algorithm>
 #include <iostream>
 #include <cmath>
-#include "../../../include/nn/networks/td_lambda.h"
+#include "../../../include/nn/networks/lstm_incremental_networks.h"
 #include "../../../include/nn/neuron.h"
 //
-TDLambda::TDLambda(float step_size,
-                   int seed,
-                   int no_of_input_features,
-                   int total_targets,
-                   int total_recurrent_features,
-                   int layer_size,
-                   float std_cap) {
+IncrementalNetworks::IncrementalNetworks(float step_size,
+                                         int seed,
+                                         int no_of_input_features,
+                                         int total_targets,
+                                         int total_recurrent_features,
+                                         int layer_size,
+                                         float std_cap) {
   this->layer_size = layer_size;
   this->step_size = step_size;
   this->std_cap = std_cap;
@@ -116,7 +116,7 @@ TDLambda::TDLambda(float step_size,
   }
 }
 
-TDLambda::TDLambda() {}
+IncrementalNetworks::IncrementalNetworks() {}
 
 Snap1::Snap1(float step_size,
              int seed,
@@ -150,14 +150,7 @@ Snap1::Snap1(float step_size,
                      weight_sampler(mt),
                      weight_sampler(mt),
                      this->std_cap);
-//    for (int counter = 0; counter < this->input_neurons.size(); counter++) {
-//      Neuron *neuron_ref = &this->input_neurons[counter];
-//      lstm_neuron.add_synapse(neuron_ref,
-//                              weight_sampler(mt),
-//                              weight_sampler(mt),
-//                              weight_sampler(mt),
-//                              weight_sampler(mt));
-//    }
+
     indexes_lstm_cells.push_back(i);
     this->LSTM_neurons.push_back(lstm_neuron);
   }
@@ -199,7 +192,7 @@ Snap1::Snap1(float step_size,
       }
     }
     int sum_temp = 0;
-    for(int i = 0; i < map_index.size(); i++)
+    for (int i = 0; i < map_index.size(); i++)
       sum_temp += map_index[i];
     std::cout << "Sum temp = " << sum_temp << std::endl;
   }
@@ -223,7 +216,7 @@ Snap1::Snap1(float step_size,
   }
 }
 
-void TDLambda::print_features_stats() {
+void IncrementalNetworks::print_features_stats() {
   for (int counter = 0; counter < LSTM_neurons.size(); counter++) {
     std::cout << "Counter = " << counter << std::endl;
     std::cout << "Feature mean = " << feature_mean[counter] << std::endl;
@@ -232,7 +225,7 @@ void TDLambda::print_features_stats() {
   }
 }
 
-float TDLambda::forward(std::vector<float> inputs) {
+float IncrementalNetworks::forward(std::vector<float> inputs) {
 
   for (int i = 0; i < inputs.size(); i++) {
     this->input_neurons.at(i).value = inputs[i];
@@ -276,7 +269,7 @@ float TDLambda::forward(std::vector<float> inputs) {
   return predictions;
 }
 
-float TDLambda::get_target_without_sideeffects(std::vector<float> inputs) {
+float IncrementalNetworks::get_target_without_sideeffects(std::vector<float> inputs) {
 //  Backup old values
   std::vector<float> backup_vales;
   for (int i = 0; i < inputs.size(); i++) {
@@ -305,13 +298,13 @@ float TDLambda::get_target_without_sideeffects(std::vector<float> inputs) {
   return temp_prediction;
 }
 
-void TDLambda::reset_state() {
+void IncrementalNetworks::reset_state() {
   for (int i = 0; i < LSTM_neurons.size(); i++) {
     LSTM_neurons[i].reset_state();
   }
 }
 
-void TDLambda::zero_grad() {
+void IncrementalNetworks::zero_grad() {
   for (int counter = 0; counter < LSTM_neurons.size(); counter++) {
     LSTM_neurons[counter].zero_grad();
   }
@@ -324,7 +317,7 @@ void TDLambda::zero_grad() {
 
 }
 
-void TDLambda::decay_gradient(float decay_rate) {
+void IncrementalNetworks::decay_gradient(float decay_rate) {
   for (int counter = 0; counter < LSTM_neurons.size(); counter++) {
     LSTM_neurons[counter].decay_gradient(decay_rate);
   }
@@ -337,7 +330,7 @@ void TDLambda::decay_gradient(float decay_rate) {
 
 }
 
-std::vector<float> TDLambda::get_prediction_weights() {
+std::vector<float> IncrementalNetworks::get_prediction_weights() {
   std::vector<float> my_vec;
   my_vec.reserve(prediction_weights.size());
   for (int index = 0; index < prediction_weights.size(); index++) {
@@ -346,7 +339,7 @@ std::vector<float> TDLambda::get_prediction_weights() {
   return my_vec;
 }
 
-std::vector<float> TDLambda::get_prediction_gradients() {
+std::vector<float> IncrementalNetworks::get_prediction_gradients() {
   std::vector<float> my_vec;
   my_vec.reserve(prediction_weights_gradient.size());
   for (int index = 0; index < prediction_weights_gradient.size(); index++) {
@@ -355,7 +348,7 @@ std::vector<float> TDLambda::get_prediction_gradients() {
   return my_vec;
 }
 
-std::vector<float> TDLambda::get_state() {
+std::vector<float> IncrementalNetworks::get_state() {
   std::vector<float> my_vec;
   my_vec.reserve(LSTM_neurons.size());
   for (int index = 0; index < LSTM_neurons.size(); index++) {
@@ -364,7 +357,7 @@ std::vector<float> TDLambda::get_state() {
   return my_vec;
 }
 
-std::vector<float> TDLambda::get_normalized_state() {
+std::vector<float> IncrementalNetworks::get_normalized_state() {
   std::vector<float> my_vec;
   my_vec.reserve(LSTM_neurons.size());
   for (int i = 0; i < LSTM_neurons.size(); i++) {
@@ -372,7 +365,7 @@ std::vector<float> TDLambda::get_normalized_state() {
   }
   return my_vec;
 }
-void TDLambda::backward(int layer) {
+void IncrementalNetworks::backward(int layer) {
 
 //  Update the prediction weights
   for (int index = 0; index < LSTM_neurons.size(); index++) {
@@ -408,7 +401,7 @@ void Snap1::backward(int layer) {
 
 }
 
-void TDLambda::update_parameters(int layer, float error) {
+void IncrementalNetworks::update_parameters(int layer, float error) {
 
   for (int index = 0; index < LSTM_neurons.size(); index++) {
     if ((layer) * layer_size <= index && index < (layer + 1) * layer_size)
@@ -433,14 +426,15 @@ void Snap1::update_parameters(int layer, float error) {
 
   float total_features_for_prediction = (layer + 1) * layer_size;
   for (int index = 0; index < LSTM_neurons.size(); index++) {
-    prediction_weights[index] += prediction_weights_gradient[index] * error * (step_size/total_features_for_prediction);
+    prediction_weights[index] +=
+        prediction_weights_gradient[index] * error * (step_size / total_features_for_prediction);
   }
   bias += error * step_size * bias_gradients;
 }
 
 //
 std::vector<
-    float> TDLambda::real_all_running_mean() {
+    float> IncrementalNetworks::real_all_running_mean() {
   std::vector<float> output_val;
   output_val.reserve(this->input_neurons.size() + this->LSTM_neurons.size());
 //  Store input values
@@ -452,7 +446,7 @@ std::vector<
   return output_val;
 }
 
-std::vector<float> TDLambda::read_all_running_variance() {
+std::vector<float> IncrementalNetworks::read_all_running_variance() {
   std::vector<float> output_val;
   output_val.reserve(this->input_neurons.size() + this->LSTM_neurons.size());
 //  Store input values
@@ -464,7 +458,7 @@ std::vector<float> TDLambda::read_all_running_variance() {
   return output_val;
 }
 
-void TDLambda::update_parameters_no_freeze(float error) {
+void IncrementalNetworks::update_parameters_no_freeze(float error) {
 
   for (int index = 0; index < LSTM_neurons.size(); index++) {
     LSTM_neurons[index].update_weights(step_size, error);
@@ -478,9 +472,9 @@ void TDLambda::update_parameters_no_freeze(float error) {
 
 }
 
-float TDLambda::read_output_values() {
+float IncrementalNetworks::read_output_values() {
 
   return predictions;
 }
 
-TDLambda::~TDLambda() {};
+IncrementalNetworks::~IncrementalNetworks() {};

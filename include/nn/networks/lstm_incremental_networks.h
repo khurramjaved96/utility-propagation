@@ -2,8 +2,8 @@
 // Created by Khurram Javed on 2022-01-24.
 //
 
-#ifndef INCLUDE_NN_NETWORKS_TD_LAMBDA_H_
-#define INCLUDE_NN_NETWORKS_TD_LAMBDA_H_
+#ifndef INCLUDE_NN_NETWORKS_LSTM_INCREMENTAL_NETWORKS_H_
+#define INCLUDE_NN_NETWORKS_LSTM_INCREMENTAL_NETWORKS_H_
 
 
 #include <vector>
@@ -16,7 +16,7 @@
 #include "./neural_network.h"
 #include "base_lstm.h"
 
-class TDLambda : public BaseLSTM {
+class IncrementalNetworks : public BaseLSTM {
  protected:
   int64_t time_step;
   std::mt19937 mt;
@@ -61,9 +61,11 @@ class TDLambda : public BaseLSTM {
 
   float read_output_values();
 
-  TDLambda(float step_size, int seed, int no_of_input_features, int total_targets, int total_recurrent_features, int layer_size, float std_cap);
+  IncrementalNetworks();
 
-  ~TDLambda();
+  IncrementalNetworks(float step_size, int seed, int no_of_input_features, int total_targets, int total_recurrent_features, int layer_size, float std_cap);
+
+  ~IncrementalNetworks();
 
   float forward(std::vector<float> inputs) override;
 
@@ -71,9 +73,9 @@ class TDLambda : public BaseLSTM {
 
   void decay_gradient(float decay_rate) override;
 
-  void backward() override;
+  virtual void backward(int layer) override;
 
-  void update_parameters(int layer, float error) override;
+  virtual void update_parameters(int layer, float error) override;
 
   void update_parameters_no_freeze(float error);
 
@@ -87,6 +89,19 @@ class TDLambda : public BaseLSTM {
 
 };
 
+class Snap1 : public IncrementalNetworks{
+ public:
+  Snap1(float step_size, int seed, int no_of_input_features, int total_targets, int total_recurrent_features, int layer_size, float std_cap);
+
+  ~Snap1();
+
+  void backward(int layer) override;
+
+  void update_parameters(int layer, float error) override;
 
 
-#endif //INCLUDE_NN_NETWORKS_TD_LAMBDA_H_
+};
+
+
+
+#endif //INCLUDE_NN_NETWORKS_LSTM_INCREMENTAL_NETWORKS_H_

@@ -3,8 +3,8 @@
 //
 
 #include "../../../include/nn/networks/network_factory.h"
-#include "../../../include/nn/networks/td_lambda.h"
-#include "../../../include/nn/networks/dense_lstm.h"
+#include "../../../include/nn/networks/lstm_incremental_networks.h"
+#include "../../../include/nn/networks/lstm_bptt.h"
 #include "../../../include/experiment/Experiment.h"
 #include <vector>
 #include <string> 
@@ -13,31 +13,31 @@ BaseLSTM* NetworkFactory::get_network(Experiment* experiment_config){
 
   BaseLSTM *network;
   if (experiment_config->get_string_param("algorithm") == "constructive") {
-    network = new TDLambda(experiment_config->get_float_param("step_size"),
-                           experiment_config->get_int_param("seed"),
-                           experiment_config->get_int_param("input_features"),
-                           1,
-                           experiment_config->get_int_param("features"),
-                           1,
-                           experiment_config->get_float_param("std_cap"));
+    network = new IncrementalNetworks(experiment_config->get_float_param("step_size"),
+                                      experiment_config->get_int_param("seed"),
+                                      experiment_config->get_int_param("input_features"),
+                                      1,
+                                      experiment_config->get_int_param("features"),
+                                      1,
+                                      experiment_config->get_float_param("std_cap"));
   }
   else if (experiment_config->get_string_param("algorithm") == "columnar") {
-    network = new TDLambda(experiment_config->get_float_param("step_size"),
-                           experiment_config->get_int_param("seed"),
-                           experiment_config->get_int_param("input_features"),
-                           1,
-                           experiment_config->get_int_param("features"),
-                           experiment_config->get_int_param("features"),
-                           experiment_config->get_float_param("std_cap"));
+    network = new IncrementalNetworks(experiment_config->get_float_param("step_size"),
+                                      experiment_config->get_int_param("seed"),
+                                      experiment_config->get_int_param("input_features"),
+                                      1,
+                                      experiment_config->get_int_param("features"),
+                                      experiment_config->get_int_param("features"),
+                                      experiment_config->get_float_param("std_cap"));
   }
   else if (experiment_config->get_string_param("algorithm") == "hybrid") {
-    network = new TDLambda(experiment_config->get_float_param("step_size"),
-                           experiment_config->get_int_param("seed"),
-                           experiment_config->get_int_param("input_features"),
-                           1,
-                           experiment_config->get_int_param("features"),
-                           experiment_config->get_int_param("width"),
-                           experiment_config->get_float_param("std_cap"));
+    network = new IncrementalNetworks(experiment_config->get_float_param("step_size"),
+                                      experiment_config->get_int_param("seed"),
+                                      experiment_config->get_int_param("input_features"),
+                                      1,
+                                      experiment_config->get_int_param("features"),
+                                      experiment_config->get_int_param("width"),
+                                      experiment_config->get_float_param("std_cap"));
   }
   else if (experiment_config->get_string_param("algorithm") == "snap") {
     network = new Snap1(experiment_config->get_float_param("step_size"),

@@ -11,7 +11,7 @@
  * */
 
 
-#include "../../../include/nn/networks/dense_lstm.h"
+#include "../../../include/nn/networks/lstm_bptt.h"
 #include "../../../include/utils.h"
 #include "../../../include/nn/utils.h"
 #include <random>

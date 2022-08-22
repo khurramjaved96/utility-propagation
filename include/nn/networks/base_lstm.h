@@ -23,7 +23,7 @@ class BaseLSTM {
 
   virtual void decay_gradient(float decay_rate) = 0;
 
-  virtual void backward() = 0;
+  virtual void backward(int layer) = 0;
 
   virtual void update_parameters(int layer, float error) = 0;
 

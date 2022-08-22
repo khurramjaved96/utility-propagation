@@ -2,8 +2,8 @@
 // Created by Khurram Javed on 2022-02-23.
 //
 
-#ifndef INCLUDE_NN_NETWORKS_DENSE_LSTM_H_
-#define INCLUDE_NN_NETWORKS_DENSE_LSTM_H_
+#ifndef INCLUDE_NN_NETWORKS_LSTM_BPTT_H_
+#define INCLUDE_NN_NETWORKS_LSTM_BPTT_H_
 
 #include <vector>
 #include <queue>
@@ -68,7 +68,7 @@ class DenseLSTM : public BaseLSTM{
 
   float forward(std::vector<float> inputs) override;
 
-  void backward() override;
+  void backward(int layer) override;
 
   std::vector<std::vector<float>> backward_with_future_grad(std::vector<std::vector<float>> grad_f, int time);
 
@@ -96,4 +96,4 @@ class DenseLSTMRmsProp : public  DenseLSTM{
 
 };
 
-#endif //INCLUDE_NN_NETWORKS_DENSE_LSTM_H_
+#endif //INCLUDE_NN_NETWORKS_LSTM_BPTT_H_

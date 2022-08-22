@@ -25,23 +25,23 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 
 add_executable(AtariExperiment atari_experiment.cpp proto_files/experience.pb.h proto_files/experience.pb.cc include/environments/proto_prediction_environments.h src/environments/proto_prediction_environments.cpp include/utils.h src/utils.cpp
-        include/nn/networks/dense_lstm.h src/nn/networks/dense_lstm.cpp include/json.hpp include/experiment/Experiment.h src/experiment/Experiment.cpp include/experiment/Database.h
+        include/nn/networks/lstm_bptt.h src/nn/networks/lstm_bptt.cpp include/json.hpp include/experiment/Experiment.h src/experiment/Experiment.cpp include/experiment/Database.h
                 src/experiment/Database.cpp include/experiment/Metric.h src/experiment/Metric.cpp include/nn/synapse.h
                 include/nn/synapse.h include/nn/message.h include/nn/dynamic_elem.h include/nn/utils.h include/nn/networks/neural_network.h
                 include/nn/networks/recurrent_network.h src/nn/synapse.cpp
                 src/nn/neuron.cpp src/nn/utils.cpp src/nn/dynamic_elem.cpp src/nn/networks/recurrent_network.cpp
                 src/nn/networks/neural_network.cpp src/nn/utils.cpp src/utils.cpp include/utils.h src/nn/message.cpp
                 include/environments/animal_learning/tracecondioning.h src/environments/animal_learning/traceconditioning.cpp
-                src/environments/animal_learning/tracepatterning.cpp include/nn/networks/td_lambda.h src/nn/networks/TDLambda.cpp src/nn/lstm.cpp include/nn/networks/snap1.h src/nn/networks/Snap1.cpp include/nn/networks/mlp_lstm.h src/nn/networks/mlp_lstm.cpp src/nn/lstm.cpp include/nn/networks/network_factory.h src/nn/networks/network_factory.cpp)
+                src/environments/animal_learning/tracepatterning.cpp include/nn/networks/lstm_incremental_networks.h src/nn/networks/lstm_incremental_networks.cpp src/nn/lstm.cpp include/nn/networks/snap1.h src/nn/networks/Snap1.cpp include/nn/networks/mlp_lstm.h src/nn/networks/mlp_lstm.cpp src/nn/lstm.cpp include/nn/networks/network_factory.h src/nn/networks/network_factory.cpp)
 
-#add_executable(AnimalLearning include/nn/networks/dense_lstm.h src/nn/networks/dense_lstm.cpp include/json.hpp include/experiment/Experiment.h src/experiment/Experiment.cpp include/experiment/Database.h
-#        src/experiment/Database.cpp include/experiment/Metric.h src/experiment/Metric.cpp include/nn/synapse.h
-#        include/nn/synapse.h include/nn/message.h include/nn/dynamic_elem.h include/nn/utils.h include/nn/networks/neural_network.h
-#        include/nn/networks/recurrent_network.h src/nn/synapse.cpp
-#        src/nn/neuron.cpp src/nn/utils.cpp src/nn/dynamic_elem.cpp src/nn/networks/recurrent_network.cpp
-#        src/nn/networks/neural_network.cpp src/nn/utils.cpp src/utils.cpp include/utils.h src/nn/message.cpp
-#        include/environments/animal_learning/tracecondioning.h src/environments/animal_learning/traceconditioning.cpp
-#        src/environments/animal_learning/tracepatterning.cpp include/nn/networks/td_lambda.h src/nn/networks/TDLambda.cpp src/nn/lstm.cpp include/nn/networks/snap1.h src/nn/networks/Snap1.cpp include/nn/networks/mlp_lstm.h src/nn/networks/mlp_lstm.cpp src/nn/lstm.cpp experiment_animal_learning.cpp)
+add_executable(AnimalLearning include/nn/networks/network_factory.h src/nn/networks/network_factory.cpp include/nn/networks/lstm_bptt.h src/nn/networks/lstm_bptt.cpp include/json.hpp include/experiment/Experiment.h src/experiment/Experiment.cpp include/experiment/Database.h
+        src/experiment/Database.cpp include/experiment/Metric.h src/experiment/Metric.cpp include/nn/synapse.h
+        include/nn/synapse.h include/nn/message.h include/nn/dynamic_elem.h include/nn/utils.h include/nn/networks/neural_network.h
+        include/nn/networks/recurrent_network.h src/nn/synapse.cpp
+        src/nn/neuron.cpp src/nn/utils.cpp src/nn/dynamic_elem.cpp src/nn/networks/recurrent_network.cpp
+        src/nn/networks/neural_network.cpp src/nn/utils.cpp src/utils.cpp include/utils.h src/nn/message.cpp
+        include/environments/animal_learning/tracecondioning.h src/environments/animal_learning/traceconditioning.cpp
+        src/environments/animal_learning/tracepatterning.cpp include/nn/networks/lstm_incremental_networks.h src/nn/networks/lstm_incremental_networks.cpp src/nn/lstm.cpp include/nn/networks/snap1.h src/nn/networks/Snap1.cpp include/nn/networks/mlp_lstm.h src/nn/networks/mlp_lstm.cpp src/nn/lstm.cpp experiment_animal_learning.cpp)
 
 #add_executable(AnimalLearningSnap include/experiment/Experiment.h src/experiment/Experiment.cpp include/experiment/Database.h
 #        src/experiment/Database.cpp include/experiment/Metric.h src/experiment/Metric.cpp include/nn/synapse.h
@@ -116,8 +116,8 @@ target_link_libraries(AtariExperiment PUBLIC mariadb)
 #target_link_libraries(LSTMMLP PUBLIC tbb)
 #target_link_libraries(LSTMMLP PUBLIC mariadb)
 
-#target_link_libraries(AnimalLearning PUBLIC tbb)
-#target_link_libraries(AnimalLearning PUBLIC mariadb)
+target_link_libraries(AnimalLearning PUBLIC tbb)
+target_link_libraries(AnimalLearning PUBLIC mariadb)
 #
 target_link_libraries(Count PUBLIC tbb)
 target_link_libraries(Count PUBLIC mariadb)
