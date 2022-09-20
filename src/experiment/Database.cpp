@@ -94,7 +94,7 @@ std::string Database::vec_to_tuple(std::vector<std::string> row, const std::stri
   std::string tup = "(";
   for (int counter = 0; counter < row.size() - 1; counter++) {
 
-    if(row[counter] == "-nan" || row[counter] == "nan" ||  row[counter] == "inf" ||  row[counter] == "-inf")
+    if (row[counter] == "-nan" || row[counter] == "nan" || row[counter] == "inf" || row[counter] == "-inf")
       tup += "NULL";
     else {
       tup += padding;
@@ -103,8 +103,9 @@ std::string Database::vec_to_tuple(std::vector<std::string> row, const std::stri
     }
     tup += ",";
   }
-  if(row[row.size() - 1] == "-nan" || row[row.size() - 1] == "nan" || row[row.size() - 1] == "inf" || row[row.size() - 1] == "-inf" )
-    tup = tup  + "NULL" + " )";
+  if (row[row.size() - 1] == "-nan" || row[row.size() - 1] == "nan" || row[row.size() - 1] == "inf"
+      || row[row.size() - 1] == "-inf")
+    tup = tup + "NULL" + " )";
   else
     tup = tup + padding + row[row.size() - 1] + padding + " )";
   return tup;
@@ -130,11 +131,12 @@ int Database::add_rows_to_table(const std::string &database_name, const std::str
                                 const std::vector<std::vector<std::string>> &values) {
   float return_val = 1;
   std::string query = "INSERT INTO " + table + vec_to_tuple(keys, "") + " VALUES ";
-  for (auto &value : values) {
+  for (auto &value: values) {
     query += vec_to_tuple(value, "'");
     if (&value != &values.back())
       query += ",";
   }
+//  std::cout << "Query = " << query << std::endl;
   int failures = 0;
   using namespace std::this_thread;     // sleep_for, sleep_until
   using namespace std::chrono_literals; // ns, us, ms, s, h, etc.
@@ -145,12 +147,12 @@ int Database::add_rows_to_table(const std::string &database_name, const std::str
   while (return_val && failures < 10) {
     this->connect_and_use(database_name);
     return_val = mysql_query(this->mysql, &query[0]);
-    if(return_val == 0 || return_val == 1) // it returns 1 on success for me ¯\_(ツ)_/¯
+    if (return_val == 0 || return_val == 1) // it returns 1 on success for me ¯\_(ツ)_/¯
       return_val = mysql_commit(this->mysql);
-    if(return_val != 0 && return_val != 1){
+    if (return_val != 0 && return_val != 1) {
       std::cout << "Error code = " << return_val << std::endl;
       int sleep_time = time_sampler(mt);
-      std::cout << "Attempt " << failures << " failed;"  <<  " Sleeping for " << sleep_time << " ms" << std::endl;
+      std::cout << "Attempt " << failures << " failed;" << " Sleeping for " << sleep_time << " ms" << std::endl;
       sleep_for(std::chrono::milliseconds(sleep_time));
       failures++;
 //      std::cout << "Query commit failed\n";
