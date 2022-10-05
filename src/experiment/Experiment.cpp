@@ -53,8 +53,30 @@ std::vector<std::string> Experiment::get_vector_param(const std::string &key) {
 
     }
   }
-  for (int i = 0; i < return_vec.size(); i++)
-    std::cout << "Arg = " << return_vec[i] << std::endl;
+
+  return return_vec;
+}
+
+std::vector<float> Experiment::get_vector_of_floats(const std::string &key) {
+  std::string val = this->get_string_param(key);
+  std::vector<float> return_vec;
+  int initial_index = 0;
+  int final_index = -1;
+  std::string temp_str;
+  for (int i = 0; i < val.size(); i++) {
+    if (val[i] == ':' || i == val.size() - 1) {
+      final_index = i;
+      if (i == val.size() - 1)
+        temp_str.append(val, initial_index, final_index + 1 - initial_index);
+      else
+        temp_str.append(val, initial_index, final_index - initial_index);
+      return_vec.push_back(std::stof(temp_str));
+      initial_index = final_index + 1;
+      temp_str.clear();
+
+    }
+  }
+
   return return_vec;
 }
 
@@ -197,7 +219,7 @@ std::vector<std::pair<std::string, std::string>> ExperimentJSON::get_all_keys(nl
 
     if (it->is_object() || (it->is_array() && (*it)[0].is_object())) {
       auto keys_temp = get_all_keys(*it);
-      for (const auto &temp : keys_temp)
+      for (const auto &temp: keys_temp)
         key_values.push_back(temp);
     }
   }
@@ -274,8 +296,8 @@ ExperimentJSON::ExperimentJSON(int argc, char **argv) {
   types.push_back("int");
 
   this->database_name = "khurram_" + this->args_for_run["name"];
-  this->d.create_database(this->database_name);
-  this->d.make_table(this->database_name, "runs", keys, types, std::vector<std::string>{"run"});
+  this->d->create_database(this->database_name);
+  this->d->make_table(this->database_name, "runs", keys, types, std::vector<std::string>{"run"});
   keys.clear();
   values.clear();
   types.clear();
@@ -285,7 +307,7 @@ ExperimentJSON::ExperimentJSON(int argc, char **argv) {
     values.push_back(imap.second);
   }
 
-  this->d.add_row_to_table(this->database_name, "runs", keys, values);
+  this->d->add_row_to_table(this->database_name, "runs", keys, values);
   return;
 //  this->args = this->parse_params(argc, argv);
 //
@@ -313,7 +335,7 @@ ExperimentJSON::ExperimentJSON(int argc, char **argv) {
 //  }
 //
 //  this->database_name = "khurram_" + this->args_for_run["name"];
-//  this->d.create_database(this->database_name);
+//  this->d->create_database(this->database_name);
 //  std::vector<std::string> keys, values, types;
 //  for (auto const &imap: this->args_for_run) {
 //    keys.push_back(imap.first);
@@ -327,8 +349,8 @@ ExperimentJSON::ExperimentJSON(int argc, char **argv) {
 //    values.push_back(imap.second);
 //
 //  }
-//  this->d.make_table(this->database_name, "runs", keys, types, std::vector<std::string>{"run"});
-//  this->d.add_row_to_table(this->database_name, "runs", keys, values);
+//  this->d->make_table(this->database_name, "runs", keys, types, std::vector<std::string>{"run"});
+//  this->d->add_row_to_table(this->database_name, "runs", keys, values);
 }
 Experiment::Experiment(int argc, char *argv[]) {
 
@@ -344,12 +366,12 @@ Experiment::Experiment(int argc, char *argv[]) {
   int temp_rank = this->run;
 
   std::vector<int> selected_combinations;
-  for (int &size_of_param : size_of_params) {
+  for (int &size_of_param: size_of_params) {
     selected_combinations.push_back(temp_rank % size_of_param);
     temp_rank = temp_rank / size_of_param;
   }
   int temp_counter = 0;
-  for (auto &arg : this->args) {
+  for (auto &arg: this->args) {
     this->args_for_run.insert(
         std::pair<std::string, std::string>(arg.first, arg.second[selected_combinations[temp_counter]]));
     std::cout << arg.first << " " << arg.second[selected_combinations[temp_counter]] << std::endl;
@@ -357,7 +379,7 @@ Experiment::Experiment(int argc, char *argv[]) {
   }
 
   this->database_name = "khurram_" + this->args_for_run["name"];
-  this->d.create_database(this->database_name);
+  this->d->create_database(this->database_name);
   std::vector<std::string> keys, values, types;
   for (auto const &imap: this->args_for_run) {
     keys.push_back(imap.first);
@@ -371,8 +393,8 @@ Experiment::Experiment(int argc, char *argv[]) {
     values.push_back(imap.second);
 
   }
-  this->d.make_table(this->database_name, "runs", keys, types, std::vector<std::string>{"run"});
-  this->d.add_row_to_table(this->database_name, "runs", keys, values);
+  this->d->make_table(this->database_name, "runs", keys, types, std::vector<std::string>{"run"});
+  this->d->add_row_to_table(this->database_name, "runs", keys, values);
 }
 
 int Experiment::get_int_param(const std::string &param) {

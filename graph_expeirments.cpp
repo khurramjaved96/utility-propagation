@@ -3,118 +3,85 @@
 //
 
 #include "include/nn/networks/graph.h"
+#include "include/nn/networks/vertex.h"
 #include <iostream>
 #include <vector>
 #include <random>
 
+#include "include/utils.h"
 #include "include/experiment/Experiment.h"
 #include "include/experiment/Metric.h"
 #include <string>
+#include "include/nn/graphfactory.h"
 
 int main(int argc, char *argv[]) {
   Experiment *my_experiment = new ExperimentJSON(argc, argv);
 
   Metric error_metric = Metric(my_experiment->database_name, "prediction_error",
-                               std::vector<std::string>{"run",  "step", "method", "error"},
+                               std::vector<std::string>{"run", "step", "method", "error"},
                                std::vector<std::string>{"int", "int", "VARCHAR(30)", "real"},
                                std::vector<std::string>{"run", "step", "method"});
 
-
   Metric error_from_optimal_util = Metric(my_experiment->database_name, "distance_from_optimal_utility",
-                               std::vector<std::string>{"run",  "method", "error"},
-                               std::vector<std::string>{"int",  "VARCHAR(30)", "real"},
-                               std::vector<std::string>{"run", "method"});
+                                          std::vector<std::string>{"run", "method", "error"},
+                                          std::vector<std::string>{"int", "VARCHAR(30)", "real"},
+                                          std::vector<std::string>{"run", "method"});
 
+  auto r = my_experiment->get_vector_of_floats("weight_range");
   if (my_experiment->get_int_param("input_vertices") < my_experiment->get_int_param("vertices")
-      && my_experiment->get_int_param("vertices") * 2 < my_experiment->get_int_param("edges")) {
+      && my_experiment->get_int_param("vertices") * 2 < my_experiment->get_int_param("edges") or true) {
     int win = 0;
     std::normal_distribution<float>
         input_sampler(my_experiment->get_float_param("input_mean"), my_experiment->get_float_param("input_std"));
-    int seed =  my_experiment->get_int_param("seed");
+    int seed = my_experiment->get_int_param("seed");
     std::mt19937 mt(seed);
-    Graph g = Graph(my_experiment->get_int_param("vertices"),
-                    my_experiment->get_int_param("edges"),
-                    my_experiment->get_int_param("input_vertices"),
-                    seed);
+    Graph *g_pruned = GraphFactory::get_graph(my_experiment->get_string_param("method"), my_experiment);
+    Graph *g_unpruned = GraphFactory::get_graph(my_experiment->get_string_param("method"), my_experiment);
 
-    Graph util_pruning = Graph(my_experiment->get_int_param("vertices"),
-                               my_experiment->get_int_param("edges"),
-                               my_experiment->get_int_param("input_vertices"),
-                               seed);
-
-    Graph gt_pruning = Graph(my_experiment->get_int_param("vertices"),
-                             my_experiment->get_int_param("edges"),
-                             my_experiment->get_int_param("input_vertices"),
-                             seed);
-
-    Graph activate_trace_pruning = Graph(my_experiment->get_int_param("vertices"),
-                                         my_experiment->get_int_param("edges"),
-                                         my_experiment->get_int_param("input_vertices"),
-                                         seed);
-//      g.normalize_weights();
-    float gt_error = 0;
-    float util_error = 0;
-    float actiavation_trace_error = 0;
+    float pruning_error = 0;
     for (int i = 0; i < my_experiment->get_int_param("steps"); i++) {
-      if(i%100000 == 0){
-        std::cout << "Step: " << i << std::endl;
+      if (i % 10000 == 9999) {
+//        std::cout << "Step: " << i << std::endl;
+//        std::cout << "Distribution of values\n";
+//        g_pruned->print_utility();
+//        g_pruned->prune_weight();
+//        print_vector(g_unpruned->get_distribution_of_values());
       }
+
       std::vector<float> inps;
       for (int t = 0; t < my_experiment->get_int_param("input_vertices"); t++)
-        inps.push_back(input_sampler(mt));
+//        inps.push_back(input_sampler(mt));
+        inps.push_back(1);
 
-      g.set_input_values(inps);
-      float actual_pred = g.update_values();
-      g.estimate_gradient();
-      g.update_utility();
+      g_pruned->set_input_values(inps);
+      g_unpruned->set_input_values(inps);
 
-      util_pruning.set_input_values(inps);
-      util_error = util_error * 0.99999 + std::abs(util_pruning.update_values() - actual_pred) * 0.00001;
-      util_pruning.estimate_gradient();
-      util_pruning.update_utility();
+      g_pruned->update_values();
+      g_unpruned->update_values();
+      g_pruned->update_utility();
 
-      gt_pruning.set_input_values(inps);
-      gt_error = gt_error * 0.99999 + std::abs(gt_pruning.update_values() - actual_pred) * 0.00001;
-      gt_pruning.estimate_gradient();
-      gt_pruning.update_utility();
+      pruning_error =
+          pruning_error * 0.999 + std::abs(g_pruned->get_prediction() - g_unpruned->get_prediction()) * 0.001;
 
-      activate_trace_pruning.set_input_values(inps);
-      actiavation_trace_error =
-          actiavation_trace_error * 0.99999 + std::abs(activate_trace_pruning.update_values() - actual_pred) * 0.00001;
-      activate_trace_pruning.estimate_gradient();
-      activate_trace_pruning.update_utility();
+      if (i % 2000 == 1999) {
+//        g_pruned->print_utility();
+        g_pruned->prune_weight();
 
+        std::vector<std::string> val;
+        val.push_back(std::to_string(my_experiment->get_int_param("run")));
+        val.push_back(std::to_string(i));
+        val.push_back(my_experiment->get_string_param("method"));
+        val.push_back(std::to_string(pruning_error));
+        error_metric.record_value(val);
+      }
       if (i % 10000 == 9999) {
-        util_pruning.remove_weight_util_prop();
-        gt_pruning.remove_weight_real_util();
-        activate_trace_pruning.remove_weight_activate_trace();
-        std::vector<std::pair<std::string, float>> key_values;
-        key_values.push_back(std::pair<std::string, float>("Util_prop_pruning", util_error));
-        key_values.push_back(std::pair<std::string, float>("Optimal_pruning", gt_error));
-        key_values.push_back(std::pair<std::string, float>("Local_pruning", actiavation_trace_error));
-        for(auto& e : key_values){
-          std::vector<std::string> val;
-          val.push_back(std::to_string(my_experiment->get_int_param("run")));
-          val.push_back(std::to_string(i));
-          val.push_back(e.first);
-          val.push_back(std::to_string(e.second));
-          error_metric.record_value(val);
-        }
+        error_metric.commit_values();
+        error_from_optimal_util.commit_values();
       }
     }
-    auto return_val = g.print_utilities();
-    for (auto v: return_val) {
-      std::vector<std::string> val;
-      val.push_back(std::to_string(my_experiment->get_int_param("run")));
-      val.push_back(std::to_string(seed));
-      val.push_back(v.first);
-      val.push_back(std::to_string(v.second));
-      error_from_optimal_util.record_value(val);
-    }
-
-
     error_metric.commit_values();
     error_from_optimal_util.commit_values();
+
   }
 //  std::cout << "Win percentage " << float(win) / total_seeds << std::endl;
 }

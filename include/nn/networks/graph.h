@@ -6,20 +6,20 @@
 #define INCLUDE_NN_NETWORKS_GRAPH_H_
 #include <vector>
 #include <random>
+#include "vertex.h"
+#include <string>
 
 class Vertex;
 
-class Edge{
+class Edge {
  public:
   int edge_id;
   static int edge_id_generator;
   int from;
   int to;
   float gradient;
-  float real_utility;
-  float activation_trace_utility;
-  float weight_utility;
-  float utility_propagation;
+  float utility;
+  float local_utility;
   float weight;
   Edge(float weight, int from, int to);
   float get_weight();
@@ -28,64 +28,148 @@ class Edge{
   bool is_recurrent();
 };
 
-class Vertex{
 
- public:
-  int id;
-  float value;
-  bool is_output;
-  float sum_of_outgoing_weights;
-  float utility;
-  float d_out_d_vertex;
-  static int id_generator;
-  Vertex();
-  std::vector<Edge> incoming_edges;
-//  std::vector<Edge> outgoing_edges;
-  void add_incoming_edge(Edge e);
-  std::vector<Edge> get_incoming_edges();
-};
-
-class Graph{
- protected:
-    int input_vertices;
-    std::mt19937 mt;
-    std::vector<Vertex> list_of_vertices;
-    int output_vertex_index;
- public:
-  Graph(int total_vertices, int total_edges, int input_vertices, int seed);
-  void add_edge(float weight, int from, int to);
-  void print_graph();
-  std::vector<std::pair<std::string, float>> print_utilities();
-  void set_input_values(std::vector<float> inp);
-  float update_values();
-  void remove_weight_real_util();
-  void remove_weight_util_prop();
-  void remove_weight_activate_trace();
-  void normalize_weights();
-  void estimate_gradient();
-  void update_utility();
-};
+//
+//class Graph{
+// protected:
+//    int input_vertices;
+//    std::mt19937 mt;
+//    std::vector<Vertex> list_of_vertices;
+//    int output_vertex_index;
+// public:
+//  Graph(int total_vertices, int total_edges, int input_vertices, int seed);
+//  void add_edge(float weight, int from, int to);
+//  void print_graph();
+//  std::vector<std::pair<std::string, float>> print_utilities();
+//  void set_input_values(std::vector<float> inp);
+//  float update_values();
+//  void remove_weight_real_util();
+//  void remove_weight_util_prop();
+//  void remove_weight_activate_trace();
+//  void normalize_weights();
+//  void estimate_gradient();
+//  void update_utility();
+//};
 
 
-class GraphBase{
+class Graph {
  protected:
   int input_vertices;
   std::mt19937 mt;
-  std::vector<Vertex> list_of_vertices;
+  std::vector<Vertex *> list_of_vertices;
   int output_vertex_index;
+  float prediction;
  public:
-  GraphBase(int total_vertices, int total_edges, int input_vertices, int seed);
+  std::vector<int> get_distribution_of_values();
+  void print_utility();
+  Graph(int total_vertices, int total_edges, int input_vertices, int seed, std::string vertex_type);
   void add_edge(float weight, int from, int to);
   void print_graph();
-  std::vector<std::pair<std::string, float>> print_utilities();
+  void estimate_gradient();
+  float get_prediction();
   void set_input_values(std::vector<float> inp);
   float update_values();
-  virtual void prune_weight() = 0;
+  void prune_weight();
   virtual void update_utility() = 0;
+};
+
+class GraphLinearAssumptionUtility : public Graph {
+ protected:
+  float utility_decay_rate;
+ public:
+  GraphLinearAssumptionUtility(int total_vertices,
+                               int total_edges,
+                               int input_vertices,
+                               int seed,
+                               std::string vertex_type,
+                               float utility_decay_rate);
+  void update_utility() override;
+};
+
+class GraphGradientUtility : public Graph {
+ protected:
+  float utility_decay_rate;
+ public:
+  GraphGradientUtility(int total_vertices,
+                               int total_edges,
+                               int input_vertices,
+                               int seed,
+                               std::string vertex_type,
+                               float utility_decay_rate);
+  void update_utility() override;
 };
 
 
 
+class GraphUtilPropogation : public Graph {
+ protected:
+  float utility_decay_rate;
+ public:
+  GraphUtilPropogation(int total_vertices,
+                       int total_edges,
+                       int input_vertices,
+                       int seed,
+                       std::string vertex_type,
+                       float utility_decay_rate);
+  void update_utility() override;
+};
 
+class GraphUtilPropogationRelative : public Graph {
+ protected:
+  float utility_decay_rate;
+ public:
+  GraphUtilPropogationRelative(int total_vertices,
+                       int total_edges,
+                       int input_vertices,
+                       int seed,
+                       std::string vertex_type,
+                       float utility_decay_rate);
+  void update_utility() override;
+};
+
+
+class GraphWeightUtility : public Graph {
+ public:
+  GraphWeightUtility(int total_vertices,
+                     int total_edges,
+                     int input_vertices,
+                     int seed,
+                     std::string vertex_type);
+  void update_utility() override;
+};
+
+class GraphRandomUtility : public Graph {
+ public:
+  GraphRandomUtility(int total_vertices,
+                     int total_edges,
+                     int input_vertices,
+                     int seed,
+                     std::string vertex_type);
+  void update_utility() override;
+};
+
+class GraphActivationTraceUtility : public Graph {
+ protected:
+  float utility_decay_rate;
+ public:
+  GraphActivationTraceUtility(int total_vertices,
+                              int total_edges,
+                              int input_vertices,
+                              int seed, std::string vertex_type,
+                              float utility_decay_rate);
+  void update_utility() override;
+};
+
+class GraphLocalUtility : public Graph {
+ protected:
+  float utility_decay_rate;
+ public:
+  GraphLocalUtility(int total_vertices,
+                    int total_edges,
+                    int input_vertices,
+                    int seed, std::string vertex_type,
+                    float utility_decay_rate);
+  void update_utility() override;
+};
 
 #endif //INCLUDE_NN_NETWORKS_GRAPH_H_
