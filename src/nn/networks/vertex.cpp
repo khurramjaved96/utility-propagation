@@ -17,7 +17,7 @@ Vertex::Vertex() {
   id = id_generator;
   id_generator++;
   this->max_value = 10;
-  this->min_value = - 10;
+  this->min_value = -10;
   this->utility = 0;
 };
 
@@ -30,6 +30,10 @@ float Vertex::forward_with_val(float value) {
 }
 float Vertex::backward(float val) {
   return 1;
+}
+
+float Vertex::get_value() {
+  return this->value;
 }
 
 int Vertex::id_generator = 0;
@@ -87,4 +91,27 @@ Vertex *VertexFactory::get_vertex(const std::string& type) {
     return new SigmoidVertex();
   }
   return nullptr;
+}
+
+BinaryVertex::BinaryVertex() {
+  this->max_value = 1;
+  this->min_value = -1;
+}
+
+float BinaryVertex::forward() {
+  if(this->value > 0)
+    return 1;
+  else
+    return 0;
+}
+
+float BinaryVertex::forward_with_val(float val) {
+  if(val > 0)
+    return 1;
+  else
+    return 0;
+}
+
+float BinaryVertex::backward(float val) {
+  return 0;
 }

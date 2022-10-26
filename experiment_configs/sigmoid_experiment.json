@@ -1,0 +1,47 @@
+{
+  "experiment": {
+    "name": "pruning_with_weight_init_fewer_2",
+    "params": {
+      "seed": [
+        "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29"
+      ],
+      "steps": [
+        "1000000"
+      ],
+      "method": [
+        "util_prop",
+        "gradient_local",
+        "linear_assumption",
+        "activation_trace",
+        "weight",
+        "gradient",
+        "random",
+        "local_utility"
+      ],
+      "non_linearity": [
+        "sigmoid"
+      ],
+      "vertices": [
+        "50"
+      ],
+      "decay": [
+        "0.999"
+      ],
+      "input_vertices": [
+        "20"
+      ],
+      "edges": [
+        "600"
+      ],
+      "input_mean": [
+        "0.0"
+      ],
+      "input_std": [
+        "1.0"
+      ],
+      "init": [
+        "-0.2:5"
+      ]
+    }
+  }
+}

@@ -56,10 +56,11 @@ class Graph {
  protected:
   int input_vertices;
   std::mt19937 mt;
-  std::vector<Vertex *> list_of_vertices;
+
   int output_vertex_index;
   float prediction;
  public:
+  std::vector<Vertex *> list_of_vertices;
   std::vector<int> get_distribution_of_values();
   void print_utility();
   Graph(int total_vertices, int total_edges, int input_vertices, int seed, std::string vertex_type);
@@ -86,26 +87,26 @@ class GraphLinearAssumptionUtility : public Graph {
   void update_utility() override;
 };
 
-class GraphGradientUtility : public Graph {
+class GradientUtility : public Graph {
  protected:
   float utility_decay_rate;
  public:
-  GraphGradientUtility(int total_vertices,
-                               int total_edges,
-                               int input_vertices,
-                               int seed,
-                               std::string vertex_type,
-                               float utility_decay_rate);
+  GradientUtility(int total_vertices,
+                  int total_edges,
+                  int input_vertices,
+                  int seed,
+                  std::string vertex_type,
+                  float utility_decay_rate);
   void update_utility() override;
 };
 
 
 
-class GraphUtilPropogation : public Graph {
+class GradientLocalUtility : public Graph {
  protected:
   float utility_decay_rate;
  public:
-  GraphUtilPropogation(int total_vertices,
+  GradientLocalUtility(int total_vertices,
                        int total_edges,
                        int input_vertices,
                        int seed,
@@ -114,49 +115,49 @@ class GraphUtilPropogation : public Graph {
   void update_utility() override;
 };
 
-class GraphUtilPropogationRelative : public Graph {
+class UtilityPropagation : public Graph {
  protected:
   float utility_decay_rate;
  public:
-  GraphUtilPropogationRelative(int total_vertices,
-                       int total_edges,
-                       int input_vertices,
-                       int seed,
-                       std::string vertex_type,
-                       float utility_decay_rate);
-  void update_utility() override;
-};
-
-
-class GraphWeightUtility : public Graph {
- public:
-  GraphWeightUtility(int total_vertices,
+  UtilityPropagation(int total_vertices,
                      int total_edges,
                      int input_vertices,
                      int seed,
-                     std::string vertex_type);
+                     std::string vertex_type,
+                     float utility_decay_rate);
   void update_utility() override;
 };
 
-class GraphRandomUtility : public Graph {
+
+class WeightUtility : public Graph {
  public:
-  GraphRandomUtility(int total_vertices,
-                     int total_edges,
-                     int input_vertices,
-                     int seed,
-                     std::string vertex_type);
+  WeightUtility(int total_vertices,
+                int total_edges,
+                int input_vertices,
+                int seed,
+                std::string vertex_type);
   void update_utility() override;
 };
 
-class GraphActivationTraceUtility : public Graph {
+class RandomUtility : public Graph {
+ public:
+  RandomUtility(int total_vertices,
+                int total_edges,
+                int input_vertices,
+                int seed,
+                std::string vertex_type);
+  void update_utility() override;
+};
+
+class ActivationTrace : public Graph {
  protected:
   float utility_decay_rate;
  public:
-  GraphActivationTraceUtility(int total_vertices,
-                              int total_edges,
-                              int input_vertices,
-                              int seed, std::string vertex_type,
-                              float utility_decay_rate);
+  ActivationTrace(int total_vertices,
+                  int total_edges,
+                  int input_vertices,
+                  int seed, std::string vertex_type,
+                  float utility_decay_rate);
   void update_utility() override;
 };
 

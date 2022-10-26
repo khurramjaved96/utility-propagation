@@ -14,8 +14,8 @@ set(SOURCE_FILES graph_expeirments.cpp include/nn/networks/graph.h src/nn/networ
         src/experiment/Database.cpp src/experiment/Experiment.cpp src/experiment/Metric.cpp)
 
 add_executable(Graph graph_expeirments.cpp include/nn/networks/graph.h include/utils.h src/utils.cpp src/nn/networks/graph.cpp include/experiment/Metric.h include/experiment/Database.h include/experiment/Experiment.h
-        src/experiment/Database.cpp src/experiment/Experiment.cpp src/experiment/Metric.cpp src/nn/networks/graph.cpp src/nn/networks/graph_utility_prop_implementations.cpp src/nn/networks/edge.cpp src/nn/networks/vertex.cpp include/nn/networks/vertex.h include/nn/graphfactory.h src/nn/graphfactory.cpp)
-
+        src/experiment/Database.cpp src/experiment/Experiment.cpp src/experiment/Metric.cpp src/nn/networks/graph.cpp src/nn/networks/graph_utility_prop_implementations.cpp src/nn/networks/edge.cpp src/nn/networks/vertex.cpp
+        include/nn/networks/vertex.h include/nn/graphfactory.h src/nn/graphfactory.cpp include/nn/weight_initializer.h src/nn/weight_initializer.cpp)
 
 
 add_executable(Count include/json.hpp include/utils.h src/utils.cpp include/experiment/Experiment.h include/experiment/Metric.h include/experiment/Database.h src/experiment/Metric.cpp src/experiment/Database.cpp src/experiment/Experiment.cpp

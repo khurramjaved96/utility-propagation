@@ -112,7 +112,13 @@ Graph::Graph(int total_vertices, int total_edges, int input_vertices, int seed, 
       this->list_of_vertices.push_back(&mem[i]);
 //      this->list_of_vertices.push_back(new SigmoidVertex());
     }
+  } else if (vertex_type == "binary") {
+    BinaryVertex *mem = new BinaryVertex[total_vertices - input_vertices - 1];
+    for (int i = 0; i < total_vertices - 1 - input_vertices; i++) {
+      this->list_of_vertices.push_back(&mem[i]);
+    }
   }
+
 
   Vertex *prediction_vertex = VertexFactory::get_vertex("linear");
   this->list_of_vertices.push_back(prediction_vertex);
@@ -190,11 +196,14 @@ float Graph::update_values() {
 void Graph::estimate_gradient() {
   for (int i = 0; i < list_of_vertices.size(); i++) {
     this->list_of_vertices[i]->d_out_d_vertex = 0;
+    this->list_of_vertices[i]->d_out_d_vertex_before_non_linearity = 0;
   }
 
 //  Back-prop implementation
   this->list_of_vertices[list_of_vertices.size() - 1]->d_out_d_vertex = 1;
+  this->list_of_vertices[list_of_vertices.size() - 1]->d_out_d_vertex_before_non_linearity = 1;
   for (int i = list_of_vertices.size() - 1; i >= 0; i--) {
+    this->list_of_vertices[i]->d_out_d_vertex_before_non_linearity = this->list_of_vertices[i]->d_out_d_vertex;
     this->list_of_vertices[i]->d_out_d_vertex =
         this->list_of_vertices[i]->backward(this->list_of_vertices[i]->value)
             * this->list_of_vertices[i]->d_out_d_vertex;
@@ -202,12 +211,6 @@ void Graph::estimate_gradient() {
       e.gradient = this->list_of_vertices[e.from]->forward() * this->list_of_vertices[e.to]->d_out_d_vertex;
       this->list_of_vertices[e.from]->d_out_d_vertex += this->list_of_vertices[e.to]->d_out_d_vertex * e.weight;
     }
-//    By the time we get here, all out-going edges fro this->list_of_vertices[i] have been processed, and none of the incoming edges have been. That means we can safely
-// apply the backward function to d_out_d_vertex at this stage.
-
-
-
-//    std::cout << " I = " << i << " d_asdsa " << this->list_of_vertices[i]->d_out_d_vertex << std::endl;
   }
 }
 
@@ -220,7 +223,16 @@ GraphLinearAssumptionUtility::GraphLinearAssumptionUtility(int total_vertices,
   this->utility_decay_rate = utility_decay_rate;
 }
 
-GraphGradientUtility::GraphGradientUtility(int total_vertices,
+GradientUtility::GradientUtility(int total_vertices,
+                                 int total_edges,
+                                 int input_vertices,
+                                 int seed, std::string vertex_type,
+                                 float utility_decay_rate)
+    : Graph(total_vertices, total_edges, input_vertices, seed, vertex_type) {
+  this->utility_decay_rate = utility_decay_rate;
+}
+
+GradientLocalUtility::GradientLocalUtility(int total_vertices,
                                            int total_edges,
                                            int input_vertices,
                                            int seed, std::string vertex_type,
@@ -229,45 +241,36 @@ GraphGradientUtility::GraphGradientUtility(int total_vertices,
   this->utility_decay_rate = utility_decay_rate;
 }
 
-GraphUtilPropogation::GraphUtilPropogation(int total_vertices,
-                                           int total_edges,
-                                           int input_vertices,
-                                           int seed, std::string vertex_type,
-                                           float utility_decay_rate)
-    : Graph(total_vertices, total_edges, input_vertices, seed, vertex_type) {
-  this->utility_decay_rate = utility_decay_rate;
-}
-
-GraphUtilPropogationRelative::GraphUtilPropogationRelative(int total_vertices,
-                                           int total_edges,
-                                           int input_vertices,
-                                           int seed, std::string vertex_type,
-                                           float utility_decay_rate)
-    : Graph(total_vertices, total_edges, input_vertices, seed, vertex_type) {
-  this->utility_decay_rate = utility_decay_rate;
-}
-
-GraphActivationTraceUtility::GraphActivationTraceUtility(int total_vertices,
-                                                         int total_edges,
-                                                         int input_vertices,
-                                                         int seed, std::string vertex_type,
-                                                         float utility_decay_rate)
-    : Graph(total_vertices, total_edges, input_vertices, seed, vertex_type) {
-  this->utility_decay_rate = utility_decay_rate;
-}
-
-GraphWeightUtility::GraphWeightUtility(int total_vertices,
+UtilityPropagation::UtilityPropagation(int total_vertices,
                                        int total_edges,
                                        int input_vertices,
-                                       int seed,
-                                       std::string vertex_type)
+                                       int seed, std::string vertex_type,
+                                       float utility_decay_rate)
+    : Graph(total_vertices, total_edges, input_vertices, seed, vertex_type) {
+  this->utility_decay_rate = utility_decay_rate;
+}
+
+ActivationTrace::ActivationTrace(int total_vertices,
+                                 int total_edges,
+                                 int input_vertices,
+                                 int seed, std::string vertex_type,
+                                 float utility_decay_rate)
+    : Graph(total_vertices, total_edges, input_vertices, seed, vertex_type) {
+  this->utility_decay_rate = utility_decay_rate;
+}
+
+WeightUtility::WeightUtility(int total_vertices,
+                             int total_edges,
+                             int input_vertices,
+                             int seed,
+                             std::string vertex_type)
     : Graph(total_vertices, total_edges, input_vertices, seed, vertex_type) {}
 
-GraphRandomUtility::GraphRandomUtility(int total_vertices,
-                                       int total_edges,
-                                       int input_vertices,
-                                       int seed,
-                                       std::string vertex_type)
+RandomUtility::RandomUtility(int total_vertices,
+                             int total_edges,
+                             int input_vertices,
+                             int seed,
+                             std::string vertex_type)
     : Graph(total_vertices, total_edges, input_vertices, seed, vertex_type) {
   std::uniform_real_distribution<float> rand_gen(0, 4);
   for (int i = 0; i < this->list_of_vertices.size(); i++) {
